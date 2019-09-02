@@ -564,7 +564,7 @@ for step in range (len(frequency_list)-1):
     for i in range (ArrayInputNum):
         data[i,i] = 0
 
-    MakeFigureColorMap(data, 'Number of dipole','Number of dipole',
+    figure_color_map(data, 'Number of dipole','Number of dipole',
                        'Matrix of currents at inputs of antenna array at %5.2f MHz'% frequency_list[step+1],
                        'NEC modeling results',
                        "Results/Dipole currents matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
@@ -597,7 +597,7 @@ for step in range (len(frequency_list)-1):
     for i in range (ArrayInputNum):
         data[i,i] = 0
 
-    MakeFigureColorMap(data, 'Number of dipole','Number of dipole',
+    figure_color_map(data, 'Number of dipole','Number of dipole',
                        'Matrix of impedances at inputs of antenna array at %5.2f MHz'% frequency_list[step+1],
                        'NEC modeling results',
                        "Results/Dipole impedances matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
@@ -611,7 +611,7 @@ for step in range (len(frequency_list)-1):
     for i in range (ArrayInputNum):
         data[i,i] = 0
 
-    MakeFigureColorMap(data, 'Number of dipole','Number of dipole',
+    figure_color_map(data, 'Number of dipole','Number of dipole',
                        'Matrix of mutual radiation resistances of dipoles in antenna array at %5.2f MHz'% frequency_list[step+1],
                        'NEC modeling results',
                        "Results/Radiation resistance matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
