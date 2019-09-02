@@ -17,17 +17,21 @@ Software_name = 'Array Impedance Matrix Calculator'
 #*************************************************************
 #                        PARAMETERS                          *
 #*************************************************************
-pi = 3.141593
+path_to_data = 'DATA/'
 
 NoOfWiresPerDipole = 45
 ArrayInputNum = 25 # Array inputs number (total number of dipoles in array or inputs of dipoles)
 
-NoOfDip =    [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13]   # Dipols being excited
-MirrorFrom = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12]	    # Active dipols under the diagonal
-MirrorInto = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14]       # Passive dipols above the diagonal
+NoOfDip =    [1,  2,  3,  4,  5,  6,  7,  8,  9, 11, 12, 13, 16, 17, 21] # 15 dipols being excited
+MirrorFrom = [1,  2,  3,  4,  6,  7,  8,  11, 12, 16]	      # Active dipols under the diagonal  Zerk1
+MirrorInto = [25, 24, 23, 22, 20, 19, 18, 15, 14, 10]         # Passive dipols above the diagonal Zerk2
 
-NECfileNum = len(NoOfDip)    # TotFileNum = The number of NECout files
+#
+#NoOfDip =    [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13]   # Dipols being excited (numbers in NEC out files names)
+#MirrorFrom = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12]	    # Active dipols under the diagonal
+#MirrorInto = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14]       # Passive dipols above the diagonal
 
+pi = 3.141593
 #*************************************************************
 #                   IMPORT LIBRARIES                         *
 #*************************************************************
@@ -42,54 +46,7 @@ from matplotlib import rc
 from package_common_modules.find_line_in_text_file import find_line_in_text_file
 from package_common_modules.intergration_trap_2d import intergration_trap_2d
 from package_common_modules.figure_color_map import figure_color_map
-#*************************************************************
-#                       FUNCTIONS                            *
-#*************************************************************
 
-# *** Find_line finds a line in .txt file which contains 'needed_text'  ***
-#     needed_text - text to find
-#     start_char - number of character where the needed_text starts in line
-#     line - returns a text line from the file with needed_text
-#def Find_line (needed_text, start_char, line):
-#    tempChar = ''
-#    while tempChar != needed_text:
-#        line = Data_File.readline()
-#        tempChar = line[start_char : len(needed_text) + start_char]
-#    return line
-
-#def IntegrTrap2x (a, b, c, d, m, n, Points):
-#    pi = 3.141593
-
-    # a - the start integration limit by the first axis
-    # b - the end integration limit by the first axis
-    # c - the start integration limit by the second axis
-    # d - the end integration limit by the second axis
-    # n - number of points on 1 axis
-    # m - number of points on 2 axis
-
-#    Sum = 0.0
-#    for i in range (m):
-#        for k in range (n):
-#            Sum = Sum + Points[i, k]
-
-#    IntegrResult = ((((b)-(a))*pi/180.0)/m) * ((((d)-(c))*pi/180.0)/n) * ((Points[a,c] + Points[b,d]) + Sum)
-#    return IntegrResult
-
-
-# Plotting color map figures
-#def MakeFigureColorMap(data, XLabel, YLabel, SupTitle, Title, FileName):
-#    plt.figure(figsize=(10, 6))
-#    rc('font', weight='normal', size = 8)
-#    plt.pcolor(data, cmap = 'jet')
-#    plt.axes().set_aspect('equal')
-#    plt.xlabel(XLabel)
-#    plt.ylabel(YLabel)
-#    plt.colorbar()
-#    plt.suptitle(SupTitle, fontsize=8, fontweight='bold')
-#    plt.title(Title, fontsize = 8)
-    # plt.subplots_adjust(left=0.2, right=0.3)
-#    pylab.savefig(FileName, bbox_inches='tight', dpi = 160)
-#    plt.close('all')
 
 #*************************************************************
 #                      MAIN PROGRAM                          *
@@ -113,22 +70,25 @@ currentTime = time.strftime("%H:%M:%S")
 currentDate = time.strftime("%d.%m.%Y")
 print ('  Today is ', currentDate, ' time is ', currentTime, '\n\n')
 
-Rinp = np.full((100, 50, 50), 0.0)
-Xinp = np.full((100, 50, 50), 0.0)
-IFedDipReal = np.full((100, 50, 50), 0.0)
-IFedDipImag = np.full((100, 50, 50), 0.0)   # IFedDip(frequency step, Active dipole, Passive dipole)
-DistanceRP = np.full((15, 100), 0.0)        # [FileNum, FreqStep] Distance for which NEC calculates radiation pattern
+NECfileNum = len(NoOfDip)    # TotFileNum = The number of NECout files
+
+Rinp = np.full((100, ArrayInputNum, ArrayInputNum), 0.0)
+Xinp = np.full((100, ArrayInputNum, ArrayInputNum), 0.0)
+IFedDipReal = np.full((100, ArrayInputNum, ArrayInputNum), 0.0)
+IFedDipImag = np.full((100, ArrayInputNum, ArrayInputNum), 0.0)   # IFedDip(frequency step, Active dipole, Passive dipole)
+DistanceRP = np.full((NECfileNum, 100), 0.0)        # [FileNum, FreqStep] Distance for which NEC calculates radiation pattern
 
 Points = np.full((91, 361), 0.0+1j*0.0)     #[theta, phi] Matrix of E-field data for integral calculations
-RSigm = np.full((100, 50, 50), 0.0+1j*0.0) #[FreqStep, Dip1, Dip2] Radiation impedance matrix
+RSigm = np.full((100, ArrayInputNum, ArrayInputNum), 0.0+1j*0.0) #[FreqStep, Dip1, Dip2] Radiation impedance matrix
 Efficiency = np.zeros((100, 100))
 
-ETHcmplx = np.full((100, 50, 181, 361), 0.0+1j*0.0) # [FreqStep, DipNo, theta, phi] Theta components of E-field
-EPHcmplx = np.full((100, 50, 181, 361), 0.0+1j*0.0) # [FreqStep, DipNo, theta, phi] Phi components of E-field
+ETHcmplx = np.full((100, ArrayInputNum, 181, 361), 0.0+1j*0.0) # [FreqStep, DipNo, theta, phi] Theta components of E-field
+EPHcmplx = np.full((100, ArrayInputNum, 181, 361), 0.0+1j*0.0) # [FreqStep, DipNo, theta, phi] Phi components of E-field
 
 # *** Creating folder for results ***
-if not os.path.exists('Results'):
-    os.makedirs('Results')
+result_path = 'Results'
+if not os.path.exists(result_path):
+    os.makedirs(result_path)
 
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -144,7 +104,8 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
     else:
         no = str(NoOfDip[FileNum])
 
-    FileName = 'DATA/GURT-V325_25x01_Nex=' + no + '.out.txt'
+    #FileName = path_to_data + 'GURT-V325_25x01_Nex=' + no + '.out.txt'
+    FileName = path_to_data + 'NEC_in_'+str(FileNum+1)+'.out.txt'
 
     # *** Opening NECoutput file ***
     Data_File = open(FileName, "r")
@@ -171,7 +132,6 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
                 segments_with_loads.append(int(words_in_line[8]))
                 loads_values.append(float(words_in_line[10]))
     LoadNum = len(segments_with_loads) # !!!!!!!!!!!! Possible error !!!!!!!!!!!!!!
-
     # !!!!!!! possible error "loads_values" and others have single dimension !!!
 
     #for i in range (LoadNum):
@@ -194,14 +154,13 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
     NoOfFrequencies = len(frequency_list) - 1
     print ('  Number of frequencies analyzed = ', NoOfFrequencies, '\n')
 
-    for i in range (1): print (' **********************************************************************')
+    print (' **********************************************************************')
 
 
     Data_File.seek(0) # return to the beginning of the file
 
     # Finding the main (central) frequency data and skip it
     line = find_line_in_text_file (Data_File, '                                    FREQUENCY=', 0, line)
-
 
     for step in range (NoOfFrequencies):
         # Seek for current frequency
@@ -234,7 +193,6 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
         line = find_line_in_text_file (Data_File, '- - - CURRENTS AND LOCATION - - -', 29, line)
         for i in range (6): line = Data_File.readline()   # Skip several lines
 
-
         for j in range (LoadNum):  # loop by number of loads
             intTemp = 0
             while (intTemp != wires_with_loads[j]):
@@ -245,9 +203,7 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
             if (segments_with_loads[j] > 1):	# if the number of segment > 2 we need to skip lines
                 for i in range (segments_with_loads[j] - 1): line = Data_File.readline()   # Skip several lines
 
-
             DipNum = int((wires_with_loads[j]) / NoOfWiresPerDipole) + 1   # Calculation of the dipole number   !!!!
-
 
             # *** Reading currents ***
             IFedDipReal[step, NoOfDip[FileNum]-1, DipNum-1] = float(line[49 : 60])
@@ -256,10 +212,10 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
             #print ('  Dip No', DipNum, ' Wire No', wires_with_loads[j], ' Segm No', segments_with_loads[j])
             #print ('  Current in the load No ', j+1, ' = ', IFedDipReal[step, NoOfDip[FileNum]-1, DipNum-1], IFedDipImag[step, NoOfDip[FileNum]-1, DipNum-1], ' Amp' )
 
+
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         #!!  Reading of E values in radiation patterns  !!
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 
         line = find_line_in_text_file (Data_File, '- - - RADIATION PATTERNS - - -', 48, line)
         line = Data_File.readline()
@@ -270,7 +226,7 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
 
         # *** loop by lines to read e-field amplitudes and phases for all theta and phi ***
 
-        for k in range (65341):
+        for k in range (65341): # 65341 = 181 * 361
             line = Data_File.readline()
             theta1 = float(line[0 : 8])
             phi1 = float(line[9 : 17])
@@ -294,7 +250,7 @@ del IFedDipReal, IFedDipImag, Rinp, Xinp
 #!!!              Processing data and calculating results                     !!!
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-print ('\n\n\n    Performing calculations...  \n\n')
+print ('\n\n\n    Calculations started at: ', time.strftime("%H:%M:%S"), '  \n\n')
 
 
 for step in range (NoOfFrequencies):     # Loop by frequencies
@@ -404,9 +360,9 @@ print ('\n\n\n     Writing the results to output files... \n\n\n')
 
 
 # *** Creating files for results ***
-CurrentMatrixFile = open("Results/Matrices of Currents.txt", "w")              # 24
-ImpedanceMatrixFile = open("Results/Matrices of Impedances.txt", "w")          # 26
-RadImpMatrixFile = open("Results/Matrices of Radiation Impedances.txt", "w")   # 27
+CurrentMatrixFile = open(result_path + "/Matrices of Currents.txt", "w")              # 24
+ImpedanceMatrixFile = open(result_path + "/Matrices of Impedances.txt", "w")          # 26
+RadImpMatrixFile = open(result_path + "/Matrices of Radiation Impedances.txt", "w")   # 27
 
 for step in range (NoOfFrequencies):	 # Loop by frequencies for results files writing
 
@@ -446,7 +402,7 @@ for step in range (NoOfFrequencies):	 # Loop by frequencies for results files wr
 
 
     # *** Writing currents on dipols inputs to files for MatCAD
-    FileName = ('Results/Currents on dipols inputs f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
+    FileName = (result_path + '/Currents on dipols inputs f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
     CurrentFile = open(FileName, "w")  # 6
     for k in range (ArrayInputNum):
         data = ['   {:+14.8e}'.format(np.real(IFedDip[step, i, k])) for i in range(ArrayInputNum)]
@@ -458,7 +414,7 @@ for step in range (NoOfFrequencies):	 # Loop by frequencies for results files wr
 
 
     # *** Writing normalized currents on dipols inputs to files for MatCAD ***
-    FileName = ('Results/Normalized Currents on dipols inputs f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
+    FileName = (result_path + '/Normalized Currents on dipols inputs f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
     CurrentFile = open(FileName, "w")  # 6
     for k in range (ArrayInputNum):
         data = ['   {:+14.8e}'.format(np.real(IFedDip[step, i, k] / IFedDip[step, i, i])) for i in range(ArrayInputNum)]
@@ -470,7 +426,7 @@ for step in range (NoOfFrequencies):	 # Loop by frequencies for results files wr
 
 
     # *** Writing impedances of dipols to files for MatCAD ***
-    FileName = ('Results/Impedances of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
+    FileName = (result_path + '/Impedances of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
     CurrentFile = open(FileName, "w")  # 6
     for k in range (ArrayInputNum):
         data = ['   {:+14.8e}'.format(np.real(Zinp[step, i, k])) for i in range(ArrayInputNum)]
@@ -482,7 +438,7 @@ for step in range (NoOfFrequencies):	 # Loop by frequencies for results files wr
 
 
     # *** Writing radiation resistances of dipols to files for MatCAD ***
-    FileName = ('Results/Radiation resistances of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
+    FileName = (result_path + '/Radiation resistances of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
     CurrentFile = open(FileName, "w")  # 6
     for k in range (ArrayInputNum):
         data = ['   {:+14.8e}'.format(np.real(RSigm[step, i, k])) for i in range(ArrayInputNum)]
@@ -495,7 +451,7 @@ for step in range (NoOfFrequencies):	 # Loop by frequencies for results files wr
 
 
     # *** Writing radiation efficiencies of dipols to files for MatCAD ***
-    FileName = ('Results/Radiation efficiencies of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
+    FileName = (result_path + '/Radiation efficiencies of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
     CurrentFile = open(FileName, "w")  # 6
     for k in range (ArrayInputNum):
         data = ['   {:+14.8e}'.format(Efficiency[step, i])]
@@ -504,7 +460,7 @@ for step in range (NoOfFrequencies):	 # Loop by frequencies for results files wr
 
 
     # *** Writing normalized Etheta RP to files for MatCAD ***
-    FileName = ('Results/Normalized to current Etheta RP f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
+    FileName = (result_path + '/Normalized to current Etheta RP f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
     CurrentFile = open(FileName, "w")  # 6
     for k in range (ArrayInputNum):
         for t in range (91):
@@ -519,7 +475,7 @@ for step in range (NoOfFrequencies):	 # Loop by frequencies for results files wr
 
 
     # *** Writing normalized Ephi RP to files for MatCAD ***
-    FileName = ('Results/Normalized to current Ephi RP f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
+    FileName = (result_path + '/Normalized to current Ephi RP f = %5.2f MHz for MatCAD.txt' % frequency_list[step+1])
     CurrentFile = open(FileName, "w")  # 6
     for k in range (ArrayInputNum):
         for t in range (91):
@@ -552,7 +508,7 @@ for step in range (len(frequency_list)-1):
     plt.title('NEC modeling results', fontsize=8)
     plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
     plt.legend(loc = 'lower center', fontsize = 10)
-    pylab.savefig("Results/Dipole currents (abs) f = %5.2f MHz.png" % frequency_list[step+1], bbox_inches='tight', dpi = 160)
+    pylab.savefig(result_path + "/Dipole currents (abs) f = %5.2f MHz.png" % frequency_list[step+1], bbox_inches='tight', dpi = 160)
     # plt.show()
     plt.close('all')
 
@@ -567,7 +523,7 @@ for step in range (len(frequency_list)-1):
     figure_color_map(data, 'Number of dipole','Number of dipole',
                        'Matrix of currents at inputs of antenna array at %5.2f MHz'% frequency_list[step+1],
                        'NEC modeling results',
-                       "Results/Dipole currents matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
+                       result_path + "/Dipole currents matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
 
 
 # *** Figure of input impedance absolute value at the main diagonal ***
@@ -586,7 +542,7 @@ for step in range (len(frequency_list)-1):
     plt.title('NEC modeling results', fontsize=7, x = 0.46, y = 1.005)
     plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
     #plt.legend(loc = 'lower center', fontsize = 10)
-    pylab.savefig("Results/Self full impedances (abs) f = %5.2f MHz.png" % frequency_list[step+1], bbox_inches='tight', dpi = 160)
+    pylab.savefig(result_path + "/Self full impedances (abs) f = %5.2f MHz.png" % frequency_list[step+1], bbox_inches='tight', dpi = 160)
     plt.close('all')
 
 
@@ -600,7 +556,7 @@ for step in range (len(frequency_list)-1):
     figure_color_map(data, 'Number of dipole','Number of dipole',
                        'Matrix of impedances at inputs of antenna array at %5.2f MHz'% frequency_list[step+1],
                        'NEC modeling results',
-                       "Results/Dipole impedances matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
+                       result_path + "/Dipole impedances matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
 
 
 
@@ -614,7 +570,39 @@ for step in range (len(frequency_list)-1):
     figure_color_map(data, 'Number of dipole','Number of dipole',
                        'Matrix of mutual radiation resistances of dipoles in antenna array at %5.2f MHz'% frequency_list[step+1],
                        'NEC modeling results',
-                       "Results/Radiation resistance matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
+                       result_path + "/Radiation resistance matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
+
+
+plt.figure()
+rc('font', weight='normal')
+plt.plot(frequency_list[1:len(frequency_list)], np.real(Zinp[FileNum, 0:len(frequency_list)-1, 1, 0]), color = 'r', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.imag(Zinp[FileNum, 0:len(frequency_list)-1, 1, 0]), color = 'b', linestyle = '-', linewidth = '1.00', label = 'Im(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.absolute(Zinp[FileNum, 0:len(frequency_list)-1, 1, 0]), color = 'violet', linestyle = '-', linewidth = '1.00', label = 'Abs(Zinp)')
+plt.xlabel('Frequency, MHz')
+plt.ylabel('R, X, |Z|, Ohm')
+#plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
+plt.title('NEC modeling results', fontsize=7, x = 0.46, y = 1.005)
+plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
+plt.legend(loc = 'lower center', fontsize = 10)
+pylab.savefig(result_path + "/Self full impedances.png", bbox_inches='tight', dpi = 160)
+# plt.show()
+plt.close('all')
+
+
+plt.figure()
+rc('font', weight='normal')
+plt.plot(frequency_list[1:len(frequency_list)], np.real(RSigm[FileNum, 0:len(frequency_list)-1, 1, 0]), color = 'r', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
+plt.xlabel('Frequency, MHz')
+plt.ylabel('Rsigm, Ohm')
+#plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
+plt.title('NEC modeling results', fontsize=7, x = 0.46, y = 1.005)
+plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
+plt.legend(loc = 'lower center', fontsize = 10)
+pylab.savefig(result_path + "/Self radiation resistances.png", bbox_inches='tight', dpi = 160)
+# plt.show()
+plt.close('all')
+
+
 
 
 endTime = time.time()

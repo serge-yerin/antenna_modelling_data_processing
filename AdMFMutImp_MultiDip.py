@@ -46,7 +46,6 @@ IFedDipReal = np.full((150, 100, 5, 50), 0.0)
 IFedDipImag = np.full((150, 100, 5, 50), 0.0) # IFedDip(Number of files analyzed, freq step, dipole, LoadNum)
 
 
-
 # *** Creating folder for results ***
 if not os.path.exists('Results'):
     os.makedirs('Results')
