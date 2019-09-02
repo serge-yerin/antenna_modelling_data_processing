@@ -1,8 +1,8 @@
-# "antenna_modelling_data_processing" 
+# "antenna_modelling_data_processing" repository 
 Processing of data from the results of NEC engine antenna modeling. For calculations usually 4NEC2X software was used. 
 This soft was available from: http://home.ict.nl/~arivoors/. Now this link does not work.
 
-##        Array Impedance Matrix Calculator (array_imppedance_matrix_calc)
+##        Array Impedance Matrix Calculator (array_imppedance_matrix_calc.py)
                  
 Program reads the result files of NEC modeling (.nec) where each (of non mirrored) dipole of the antenna array 
 is excited one by one (one in each file), finds frequencies of analysis,  excitation sources, loads and their values, 
@@ -17,3 +17,6 @@ do not need to model their excitation with NEC because their radiation pattern i
 except for you need to "mirror" it in respect to symmetry point. It is implemented in the code. But you have to
 specify which number of dipoles were modeled with excitation, which of them can be "mirrored" and which of non
 modeled dipoles will have "mirrored" patterns.
+
+##        Array Impedance Matrix Calculator (array_imppedance_matrix_calc_Ort.py)
+is a previous version of the code adjusted to model antenna array of 25 crossed dipoles (50 dipoles in total). Needs check.
