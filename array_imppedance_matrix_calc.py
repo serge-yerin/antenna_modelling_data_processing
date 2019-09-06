@@ -23,12 +23,12 @@ NoOfWiresPerDipole = 45
 ArrayInputNum = 25 # Array inputs number (total number of dipoles in array or inputs of dipoles)
 
 NoOfDip =    [1,  2,  3,  4,  5,  6,  7,  8,  9, 11, 12, 13, 16, 17, 21] # 15 dipols being excited
-MirrorFrom = [1,  2,  3,  4,  6,  7,  8,  11, 12, 16]	      # Active dipols under the diagonal  Zerk1
-MirrorInto = [25, 24, 23, 22, 20, 19, 18, 15, 14, 10]         # Passive dipols above the diagonal Zerk2
-
+MirrorFrom = [1,  2,  3,  4,  6,  7,  8,  11, 12, 16]	                 # Active dipols under the diagonal
+MirrorInto = [25, 24, 23, 22, 20, 19, 18, 15, 14, 10]                    # Passive dipols above the diagonal
+num_of_freq = 10
 #
 #NoOfDip =    [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13]   # Dipols being excited (numbers in NEC out files names)
-#MirrorFrom = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12]	    # Active dipols under the diagonal
+#MirrorFrom = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12]	     # Active dipols under the diagonal
 #MirrorInto = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14]       # Passive dipols above the diagonal
 
 pi = 3.141593
@@ -52,7 +52,7 @@ from package_common_modules.figure_color_map import figure_color_map
 #                      MAIN PROGRAM                          *
 #*************************************************************
 
-print (' \n\n\n\n\n\n')
+print (' \n\n\n\n\n')
 print ('    -----------------------------------------------------------------------')
 print ('    ***                                                                 ***')
 print ('    ***       ', Software_name,' v.', Software_version, '        ***')
@@ -72,18 +72,18 @@ print ('  Today is ', currentDate, ' time is ', currentTime, '\n\n')
 
 NECfileNum = len(NoOfDip)    # TotFileNum = The number of NECout files
 
-Rinp = np.full((100, ArrayInputNum, ArrayInputNum), 0.0)
-Xinp = np.full((100, ArrayInputNum, ArrayInputNum), 0.0)
-IFedDipReal = np.full((100, ArrayInputNum, ArrayInputNum), 0.0)
-IFedDipImag = np.full((100, ArrayInputNum, ArrayInputNum), 0.0)   # IFedDip(frequency step, Active dipole, Passive dipole)
-DistanceRP = np.full((NECfileNum, 100), 0.0)        # [FileNum, FreqStep] Distance for which NEC calculates radiation pattern
+Rinp = np.full((num_of_freq, ArrayInputNum, ArrayInputNum), 0.0)
+Xinp = np.full((num_of_freq, ArrayInputNum, ArrayInputNum), 0.0)
+IFedDipReal = np.full((num_of_freq, ArrayInputNum, ArrayInputNum), 0.0)
+IFedDipImag = np.full((num_of_freq, ArrayInputNum, ArrayInputNum), 0.0)   # IFedDip(frequency step, Active dipole, Passive dipole)
+DistanceRP = np.full((NECfileNum, num_of_freq), 0.0)        # [FileNum, FreqStep] Distance for which NEC calculates radiation pattern
 
 Points = np.full((91, 361), 0.0+1j*0.0)     #[theta, phi] Matrix of E-field data for integral calculations
-RSigm = np.full((100, ArrayInputNum, ArrayInputNum), 0.0+1j*0.0) #[FreqStep, Dip1, Dip2] Radiation impedance matrix
-Efficiency = np.zeros((100, 100))
+RSigm = np.full((num_of_freq, ArrayInputNum, ArrayInputNum), 0.0+1j*0.0) #[FreqStep, Dip1, Dip2] Radiation impedance matrix
+Efficiency = np.zeros((num_of_freq, ArrayInputNum))
 
-ETHcmplx = np.full((100, ArrayInputNum, 181, 361), 0.0+1j*0.0) # [FreqStep, DipNo, theta, phi] Theta components of E-field
-EPHcmplx = np.full((100, ArrayInputNum, 181, 361), 0.0+1j*0.0) # [FreqStep, DipNo, theta, phi] Phi components of E-field
+ETHcmplx = np.full((num_of_freq, ArrayInputNum, 181, 361), 0.0+1j*0.0) # [FreqStep, DipNo, theta, phi] Theta components of E-field
+EPHcmplx = np.full((num_of_freq, ArrayInputNum, 181, 361), 0.0+1j*0.0) # [FreqStep, DipNo, theta, phi] Phi components of E-field
 
 # *** Creating folder for results ***
 result_path = 'Results'
@@ -116,7 +116,7 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
 
     # *** Counting number of lines in the file ***
     num_lines = sum(1 for line in Data_File)
-    print ('\n  Number of lines in the file = ', num_lines, '\n')
+    print ('\n  Number of lines in the file = ', num_lines, ' ')
     Data_File.seek(0)
 
 
@@ -154,8 +154,7 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
     NoOfFrequencies = len(frequency_list) - 1
     print ('  Number of frequencies analyzed = ', NoOfFrequencies, '\n')
 
-    print (' **********************************************************************')
-
+    #print (' **********************************************************************')
 
     Data_File.seek(0) # return to the beginning of the file
 
@@ -492,6 +491,8 @@ for step in range (NoOfFrequencies):	 # Loop by frequencies for results files wr
 #!!!                            F I G U R E S                                 !!!
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+print ('     Making figures... \n\n\n')
+
 # *** Figure of current absolute value ***
 for step in range (len(frequency_list)-1):
 
@@ -506,7 +507,8 @@ for step in range (len(frequency_list)-1):
     plt.ylabel('Current at dipole output, A')
     #plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
     plt.title('NEC modeling results', fontsize=8)
-    plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
+    #plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
+    plt.grid(b = True, which = 'both', color = 'silver', linestyle = '-')
     plt.legend(loc = 'lower center', fontsize = 10)
     pylab.savefig(result_path + "/Dipole currents (abs) f = %5.2f MHz.png" % frequency_list[step+1], bbox_inches='tight', dpi = 160)
     # plt.show()
@@ -572,33 +574,39 @@ for step in range (len(frequency_list)-1):
                        'NEC modeling results',
                        result_path + "/Radiation resistance matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
 
-
+central = int(ArrayInputNum / 2) + 1
 plt.figure()
 rc('font', weight='normal')
-plt.plot(frequency_list[1:len(frequency_list)], np.real(Zinp[FileNum, 0:len(frequency_list)-1, 1, 0]), color = 'r', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
-plt.plot(frequency_list[1:len(frequency_list)], np.imag(Zinp[FileNum, 0:len(frequency_list)-1, 1, 0]), color = 'b', linestyle = '-', linewidth = '1.00', label = 'Im(Zinp)')
-plt.plot(frequency_list[1:len(frequency_list)], np.absolute(Zinp[FileNum, 0:len(frequency_list)-1, 1, 0]), color = 'violet', linestyle = '-', linewidth = '1.00', label = 'Abs(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.real(Zinp[0:len(frequency_list)-1, 0, 0]), color = 'C0', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.imag(Zinp[0:len(frequency_list)-1, 0, 0]), color = 'C1', linestyle = '-', linewidth = '1.00', label = 'Im(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.absolute(Zinp[0:len(frequency_list)-1, 0, 0]), color = 'C4', linestyle = '-', linewidth = '1.00', label = 'Abs(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.real(Zinp[0:len(frequency_list)-1, central, central]), color = 'C0', linestyle = '--', linewidth = '1.00', label = 'Re(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.imag(Zinp[0:len(frequency_list)-1, central, central]), color = 'C1', linestyle = '--', linewidth = '1.00', label = 'Im(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.absolute(Zinp[0:len(frequency_list)-1, central, central]), color = 'C4', linestyle = '--', linewidth = '1.00', label = 'Abs(Zinp)')
 plt.xlabel('Frequency, MHz')
 plt.ylabel('R, X, |Z|, Ohm')
 #plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
 plt.title('NEC modeling results', fontsize=7, x = 0.46, y = 1.005)
-plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
+#plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
+plt.grid(b = True, which = 'both', color = 'silver', linestyle = '-')
 plt.legend(loc = 'lower center', fontsize = 10)
-pylab.savefig(result_path + "/Self full impedances.png", bbox_inches='tight', dpi = 160)
+pylab.savefig(result_path + "/Self full impedances of first dipole.png", bbox_inches='tight', dpi = 160)
 # plt.show()
 plt.close('all')
 
 
 plt.figure()
 rc('font', weight='normal')
-plt.plot(frequency_list[1:len(frequency_list)], np.real(RSigm[FileNum, 0:len(frequency_list)-1, 1, 0]), color = 'r', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.real(RSigm[0:len(frequency_list)-1, 0, 0]), color = 'C0', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.real(RSigm[0:len(frequency_list)-1, central, central]), color = 'C1', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
 plt.xlabel('Frequency, MHz')
 plt.ylabel('Rsigm, Ohm')
 #plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
 plt.title('NEC modeling results', fontsize=7, x = 0.46, y = 1.005)
-plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
+plt.grid(b = True, which = 'both', color = 'silver', linestyle = '-')
+#plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
 plt.legend(loc = 'lower center', fontsize = 10)
-pylab.savefig(result_path + "/Self radiation resistances.png", bbox_inches='tight', dpi = 160)
+pylab.savefig(result_path + "/Self radiation resistances of first dipole.png", bbox_inches='tight', dpi = 160)
 # plt.show()
 plt.close('all')
 
