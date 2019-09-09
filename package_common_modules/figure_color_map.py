@@ -8,7 +8,6 @@ import pylab
 def figure_color_map(data, XLabel, YLabel, SupTitle, Title, FileName):
     fig = plt.figure(figsize = (10, 6))
     ax1 = fig.add_subplot(111)
-    #plt.figure(figsize=(10, 6))
     rc('font', weight='normal', size = 8)
     plot = ax1.pcolor(data, cmap = 'jet')
     ax1.set_aspect('equal', 'box') #axes().set_aspect('equal')

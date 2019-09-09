@@ -1,8 +1,9 @@
 # Python3
-Software_version = '2019.09.02'
-Software_name = 'Array Impedance Matrix Calculator'
-#                 array_imppedance_matrix_calc
-#             ***  Antenna Array Impedance Matrices Calculator   ***
+Software_version = '2019.09.07'
+Software_name = 'Array Input and Radiation Impedance Matrix Calculator'
+
+#             array_input_and_rad_imppedance_matrix_calc
+#    ***  Antenna Array Input and Radiation Impedance Matrices Calculator   ***
 # Program reads the result files of NEC modeling (.nec) where each (of non mirrored) dipole
 # of the antenna array is excited one by one (in each file), finds frequencies of analysis,
 # excitation sources, loads and their values, currents in sources and loads, antenna patterns.
@@ -19,14 +20,16 @@ Software_name = 'Array Impedance Matrix Calculator'
 #*************************************************************
 path_to_data = 'DATA/'
 
-NoOfWiresPerDipole = 45
-ArrayInputNum = 25 # Array inputs number (total number of dipoles in array or inputs of dipoles)
+NoOfWiresPerDipole = 45     # Number of wires per dipole (not segments!) needed to find loads
+ArrayInputNum = 25          # Array inputs number (total number of dipoles in array or inputs of dipoles)
+num_of_freq = 10            # Maximal possible number of frequencies analyzed
 
+# Square antenna array 5 * 5 = 25 dipoles
 NoOfDip =    [1,  2,  3,  4,  5,  6,  7,  8,  9, 11, 12, 13, 16, 17, 21] # 15 dipols being excited
 MirrorFrom = [1,  2,  3,  4,  6,  7,  8,  11, 12, 16]	                 # Active dipols under the diagonal
 MirrorInto = [25, 24, 23, 22, 20, 19, 18, 15, 14, 10]                    # Passive dipols above the diagonal
-num_of_freq = 10
-#
+
+# Linear antenna array 1 * 25 dipoles
 #NoOfDip =    [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13]   # Dipols being excited (numbers in NEC out files names)
 #MirrorFrom = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12]	     # Active dipols under the diagonal
 #MirrorInto = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14]       # Passive dipols above the diagonal
@@ -53,16 +56,17 @@ from package_common_modules.figure_color_map import figure_color_map
 #*************************************************************
 
 print (' \n\n\n\n\n')
-print ('    -----------------------------------------------------------------------')
-print ('    ***                                                                 ***')
-print ('    ***       ', Software_name,' v.', Software_version, '        ***')
-print ('    ***   Program analyzes NEC output files with it turn excitation of  ***')
-print ('    ***     array elements (one source other terminals are loaded),     ***')
-print ('    ***         reads and calculates self and mutual impedances,        ***')
-print ('    ***            radiation resistances of array elements.             ***   (c) YeS 2019')
-print ('    ***           Works with frequency sweep results of NEC             ***')
-print ('    ***                                                                 ***')
-print ('    -----------------------------------------------------------------------\n\n\n')
+print ('    ----------------------------------------------------------------------------')
+print ('    ***                                                                     ***')
+print ('    ***       ', Software_name, '       ***')
+print ('    ***                          v.', Software_version, '                             ***')
+print ('    ***     Program analyzes NEC output files with it turn excitation of    ***')
+print ('    ***       array elements (one source other terminals are loaded),       ***')
+print ('    ***           reads and calculates self and mutual impedances,          ***')
+print ('    ***              radiation resistances of array elements.               ***  (c) YeS 2019')
+print ('    ***             Works with frequency sweep results of NEC               ***')
+print ('    ***                                                                     ***')
+print ('    ---------------------------------------------------------------------------\n\n\n')
 
 # *** Time consumption calculation (beginning) ***
 startTime = time.time()
@@ -506,7 +510,7 @@ for step in range (len(frequency_list)-1):
     plt.xlabel('Number of dipole')
     plt.ylabel('Current at dipole output, A')
     #plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
-    plt.title('NEC modeling results', fontsize=8)
+    plt.title('NEC modeling results, self currents - absolute values', fontsize=10)
     #plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
     plt.grid(b = True, which = 'both', color = 'silver', linestyle = '-')
     plt.legend(loc = 'lower center', fontsize = 10)
@@ -557,7 +561,7 @@ for step in range (len(frequency_list)-1):
 
     figure_color_map(data, 'Number of dipole','Number of dipole',
                        'Matrix of impedances at inputs of antenna array at %5.2f MHz'% frequency_list[step+1],
-                       'NEC modeling results',
+                       'NEC modeling results, self values set to zeros to show mutual pattern',
                        result_path + "/Dipole impedances matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
 
 
@@ -571,10 +575,12 @@ for step in range (len(frequency_list)-1):
 
     figure_color_map(data, 'Number of dipole','Number of dipole',
                        'Matrix of mutual radiation resistances of dipoles in antenna array at %5.2f MHz'% frequency_list[step+1],
-                       'NEC modeling results',
+                       'NEC modeling results, self values set to zeros to show mutual pattern',
                        result_path + "/Radiation resistance matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step+1])
 
 central = int(ArrayInputNum / 2) + 1
+
+# Frequency dependence of input impedance of the first dipole and the central one
 plt.figure()
 rc('font', weight='normal')
 plt.plot(frequency_list[1:len(frequency_list)], np.real(Zinp[0:len(frequency_list)-1, 0, 0]), color = 'C0', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
@@ -587,14 +593,13 @@ plt.xlabel('Frequency, MHz')
 plt.ylabel('R, X, |Z|, Ohm')
 #plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
 plt.title('NEC modeling results', fontsize=7, x = 0.46, y = 1.005)
-#plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
 plt.grid(b = True, which = 'both', color = 'silver', linestyle = '-')
 plt.legend(loc = 'lower center', fontsize = 10)
 pylab.savefig(result_path + "/Self full impedances of first dipole.png", bbox_inches='tight', dpi = 160)
 # plt.show()
 plt.close('all')
 
-
+# Frequency dependence of radiation resistance of the first dipole and the central one
 plt.figure()
 rc('font', weight='normal')
 plt.plot(frequency_list[1:len(frequency_list)], np.real(RSigm[0:len(frequency_list)-1, 0, 0]), color = 'C0', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
@@ -604,7 +609,6 @@ plt.ylabel('Rsigm, Ohm')
 #plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
 plt.title('NEC modeling results', fontsize=7, x = 0.46, y = 1.005)
 plt.grid(b = True, which = 'both', color = 'silver', linestyle = '-')
-#plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
 plt.legend(loc = 'lower center', fontsize = 10)
 pylab.savefig(result_path + "/Self radiation resistances of first dipole.png", bbox_inches='tight', dpi = 160)
 # plt.show()
@@ -616,4 +620,4 @@ plt.close('all')
 endTime = time.time()
 print ('\n\n\n  The program execution lasted for ', round((endTime - startTime), 2), 'seconds (',
                                                 round((endTime - startTime)/60, 2), 'min. ) \n')
-print ('\n           *** Program ' + Software_name + ' has finished! *** \n\n\n')
+print ('\n      *** Program ' + Software_name + ' has finished! *** \n\n\n')
