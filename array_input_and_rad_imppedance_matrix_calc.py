@@ -2,7 +2,7 @@
 Software_version = '2019.09.07'
 Software_name = 'Array Input and Radiation Impedance Matrix Calculator'
 
-#             array_input_and_rad_imppedance_matrix_calc
+#             array_input_and_rad_impedance_matrix_calc
 #    ***  Antenna Array Input and Radiation Impedance Matrices Calculator   ***
 # Program reads the result files of NEC modeling (.nec) where each (of non mirrored) dipole
 # of the antenna array is excited one by one (in each file), finds frequencies of analysis,
@@ -10,7 +10,7 @@ Software_name = 'Array Input and Radiation Impedance Matrix Calculator'
 # Then the program calculates mutual impedances, radiation resistances, and store them to
 # text files (.txt).
 
-# The initial version was created for AA of 25 GURT dipols of 1 polarization of
+# The initial version was created for AA of 25 GURT dipoles of 1 polarization of
 # incoming waves, number of segments per dipole is 325 (Multi frequencies) then it was
 # extended for other possibilities, but still you need to analyze carefully the results
 
@@ -21,13 +21,20 @@ Software_name = 'Array Input and Radiation Impedance Matrix Calculator'
 path_to_data = 'DATA/'
 
 NoOfWiresPerDipole = 45     # Number of wires per dipole (not segments!) needed to find loads
-ArrayInputNum = 25          # Array inputs number (total number of dipoles in array or inputs of dipoles)
-num_of_freq = 10            # Maximal possible number of frequencies analyzed
+ArrayInputNum = 5           # Array inputs number (total number of dipoles in array or inputs of dipoles)
+num_of_freq = 76            # Maximal possible number of frequencies analyzed
+
+
+# Linear antenna array 1 * 5 = 5 dipoles
+NoOfDip =    [1,  2,  3] # 3 dipols being excited
+MirrorFrom = [1, 2]	   # Active dipoles under the diagonal
+MirrorInto = [5, 4]    # Passive dipoles above the diagonal
+
 
 # Square antenna array 5 * 5 = 25 dipoles
-NoOfDip =    [1,  2,  3,  4,  5,  6,  7,  8,  9, 11, 12, 13, 16, 17, 21] # 15 dipols being excited
-MirrorFrom = [1,  2,  3,  4,  6,  7,  8,  11, 12, 16]	                 # Active dipols under the diagonal
-MirrorInto = [25, 24, 23, 22, 20, 19, 18, 15, 14, 10]                    # Passive dipols above the diagonal
+#NoOfDip =    [1,  2,  3,  4,  5,  6,  7,  8,  9, 11, 12, 13, 16, 17, 21] # 15 dipols being excited
+#MirrorFrom = [1,  2,  3,  4,  6,  7,  8,  11, 12, 16]	                 # Active dipols under the diagonal
+#MirrorInto = [25, 24, 23, 22, 20, 19, 18, 15, 14, 10]                    # Passive dipols above the diagonal
 
 # Linear antenna array 1 * 25 dipoles
 #NoOfDip =    [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13]   # Dipols being excited (numbers in NEC out files names)
@@ -55,8 +62,7 @@ from package_common_modules.figure_color_map import figure_color_map
 #                      MAIN PROGRAM                          *
 #*************************************************************
 
-print (' \n\n\n\n\n')
-print ('    ----------------------------------------------------------------------------')
+print ('\n\n\n\n\n    ----------------------------------------------------------------------------')
 print ('    ***                                                                     ***')
 print ('    ***       ', Software_name, '       ***')
 print ('    ***                          v.', Software_version, '                             ***')
@@ -108,8 +114,10 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
     else:
         no = str(NoOfDip[FileNum])
 
+    FileName = path_to_data + 'GURT-V325_ 1x 5_Nex= ' + str(FileNum + 1) + '.out.txt'
     #FileName = path_to_data + 'GURT-V325_25x01_Nex=' + no + '.out.txt'
-    FileName = path_to_data + 'NEC_in_'+str(FileNum+1)+'.out.txt'
+    #FileName = path_to_data + 'NEC_in_'+str(FileNum+1)+'.out.txt'
+
 
     # *** Opening NECoutput file ***
     Data_File = open(FileName, "r")
@@ -274,16 +282,14 @@ for step in range (NoOfFrequencies):     # Loop by frequencies
 
 
     # Mirroring the Impedances for dipols that were not excited
-
     for i in range (len(MirrorInto)):     # Loop by active dipols below array diagonal
-      for j in range (ArrayInputNum):         # Loop by dipols
-        Zinp[step, MirrorInto[i]-1, ArrayInputNum - 1 - j] = Zinp[step, MirrorFrom[i]-1, j]  # ArrayInputNum + 1
+        for j in range (ArrayInputNum):         # Loop by dipols
+            Zinp[step, MirrorInto[i]-1, ArrayInputNum - 1 - j] = Zinp[step, MirrorFrom[i]-1, j]  # ArrayInputNum + 1
 
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     #!!  Mirroring of RP for noncalculated dipols  !!
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     for i in range (len(MirrorInto)):   # loop by dipoles
         for t in range (181):           # loop by theta
             for p in range (180):       # loop by phi

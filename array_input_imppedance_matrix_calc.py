@@ -2,7 +2,7 @@
 Software_version = '2019.09.07'
 Software_name = 'Array Input Impedance Matrix Calculator'
 
-#                 array_input_imppedance_matrix_calc
+#                 array_input_impedance_matrix_calc
 #    ***  Antenna Array Input Impedance Matrices Calculator   ***
 # Program reads the result file of NEC modeling (.nec) where one dipole
 # of the antenna array is excited and others are loaded, finds frequencies of
@@ -10,7 +10,7 @@ Software_name = 'Array Input Impedance Matrix Calculator'
 # loads. Then the program calculates mutual impedances, and store them
 # to text files (.txt).
 
-# The initial version was created for AA of 25 GURT dipols of 1 polarization of
+# The initial version was created for AA of 25 GURT dipoles of 1 polarization of
 # incoming waves, number of segments per dipole is 325 (Multi frequencies) then
 # it was extended for other possibilities, but still you need to analyze
 # carefully the results
