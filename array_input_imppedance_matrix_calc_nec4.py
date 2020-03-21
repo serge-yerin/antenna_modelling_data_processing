@@ -114,6 +114,7 @@ for FileNum in range (TotFileNum):
         for i in range (LoadNum):
             print ('  Wire No ', wires_with_loads[i], '  Segm No', segments_with_loads[i], '  Resistance = ', loads_values[i])
 
+    Data_File.seek(0)  # return to the beginning of the file
     frequency_list = []
     num_of_frequencies = 0
     for line in Data_File:
