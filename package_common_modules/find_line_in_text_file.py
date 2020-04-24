@@ -4,7 +4,7 @@
 #     needed_text - text to find
 #     start_char - number of character where the needed_text starts in line
 #     line - returns a text line from the file with needed_text
-def find_line_in_text_file (file_handle, needed_text, start_char, line):
+def find_line_in_text_file (file_handle, needed_text, start_char):
     tempChar = ''
     while tempChar != needed_text:
         line = file_handle.readline()

@@ -20,7 +20,7 @@ Software_name = 'Array Input and Radiation Impedance Matrix Calculator for NEC4 
 # *************************************************************
 path_to_data = 'DATA/'
 
-NoOfWiresPerDipole = 434    # Number of wires per dipole (not segments!) needed to find loads
+NoOfWiresPerDipole = 98     # Number of wires per dipole (not segments!) needed to find loads  # 434
 ArrayInputNum = 6           # Array inputs number (total number of dipoles in array or inputs of dipoles)
 num_of_freq = 30            # Maximal possible number of frequencies analyzed
 print_or_not = 1
@@ -45,6 +45,7 @@ pi = 3.141593
 #                    IMPORT LIBRARIES                         *
 # *************************************************************
 import os
+import sys
 import time
 # from scipy.integrate import simps
 import pylab
@@ -106,14 +107,15 @@ if not os.path.exists(result_path):
 
 for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
 
-    # *** Configuring the name of NECoutput file ***
+    # *** Configuring the name of NEC output file ***
 
     if FileNum < 9:
         no = '0' + str(NoOfDip[FileNum])
     else:
         no = str(NoOfDip[FileNum])
 
-    FileName = path_to_data + 'UTR2_6x1_EX=' + str(FileNum + 1) + '.out'
+    FileName = path_to_data + 'UTR2_6x1-' + str(FileNum + 1) + '.out'
+    #FileName = path_to_data + 'UTR2_6x1_EX=' + str(FileNum + 1) + '.out'
     #FileName = path_to_data + 'GURT-V325_25x01_Nex=' + no + '.out.txt'
     #FileName = path_to_data + 'NEC_in_'+str(FileNum+1)+'.out.txt'
 
@@ -135,23 +137,29 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
     wires_with_loads = []
     segments_with_loads = []
     loads_values = []
-    for line in Data_File:
-        if line.startswith('                               - - - STRUCTURE IMPEDANCE LOADING - - -'):
-            for i in range(5): line = Data_File.readline()  # Skip several lines
-            words_in_line = 'A'
-            #print('0 - ',  line)
-            while (words_in_line[0] != 'CP'):
-                line = Data_File.readline()
-                #print('1 - ', line)
-                if line != '\n':
-                    #print('2 - ', line)
-                    words_in_line = line.split()
-                    if words_in_line[4]+' '+words_in_line[5] == 'FIXED IMPEDANCE':
-                        wires_with_loads.append(int(words_in_line[0]))
-                        segments_with_loads.append(int(words_in_line[1]))
-                        loads_values.append(float(words_in_line[3]))
-            break
-    LoadNum = len(segments_with_loads) # !!!!!!!!!!!! Possible error !!!!!!!!!!!!!!
+    #for line in Data_File:
+    #    if line.startswith('                               - - - STRUCTURE IMPEDANCE LOADING - - -'):
+    line = find_line_in_text_file(Data_File, '- - - STRUCTURE IMPEDANCE LOADING - - -', 31)
+    for i in range(5): line = Data_File.readline()  # Skip several lines
+    words_in_line = 'A'
+    #print('0 - ',  line)
+    counter = 0
+    while (words_in_line[0] != 'CP' and counter < 2):
+        line = Data_File.readline()
+        #print('1 - ', line)
+        if line != '\n':
+            #print('2 - ', line)
+            counter = 0
+            words_in_line = line.split()
+            if words_in_line[4]+' '+words_in_line[5] == 'FIXED IMPEDANCE':
+                wires_with_loads.append(int(words_in_line[0]))
+                segments_with_loads.append(int(words_in_line[1]))
+                loads_values.append(float(words_in_line[3]))
+        else:
+            counter += 1
+    #break
+
+    LoadNum = len(segments_with_loads)  # !!!!!!!!!!!! Possible error !!!!!!!!!!!!!!
 
     if print_or_not == 1:
         for i in range (LoadNum):
@@ -174,15 +182,15 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
 
     for step in range (num_of_frequencies):
         # Seek for current frequency
-        line = find_line_in_text_file (Data_File, 'FREQUENCY=', 36, line)
+        line = find_line_in_text_file (Data_File, 'FREQUENCY=', 36)
         words_in_line = line.split()
         frequency_list.append(float(words_in_line[1]))
 
         # *** Searching antenna input parameters block at the frequency ***
-        line = find_line_in_text_file (Data_File, '- - - ANTENNA INPUT PARAMETERS - - -', 42, line)
+        line = find_line_in_text_file (Data_File, '- - - ANTENNA INPUT PARAMETERS - - -', 42)
 
         # *** Searching and reading the self impedance and initial current at the frequency ***
-        line = find_line_in_text_file (Data_File, 'IMPEDANCE', 64, line)
+        line = find_line_in_text_file (Data_File, 'IMPEDANCE', 64)
         line = Data_File.readline()   # Skip one line
 
         line = Data_File.readline()
@@ -191,27 +199,27 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
         Rinp[step, NoOfDip[FileNum]-1, NoOfDip[FileNum]-1] = float(line[60 : 72])
         Xinp[step, NoOfDip[FileNum]-1, NoOfDip[FileNum]-1] = float(line[72 : 84])
 
-        # print ('\n\n   For frequency = ', frequency_list[step+1], ' MHz')
-        # print ('  ---------------------------- \n')
-        # print ('  Self full impedance of the dipole = ', Rinp[step, NoOfDip[FileNum]-1, NoOfDip[FileNum]-1], Xinp[step, NoOfDip[FileNum]-1, NoOfDip[FileNum]-1], ' Ohm' )
-        # print ('  Current in fed point of active dipole = ', IFedDipReal[step, NoOfDip[FileNum]-1, NoOfDip[FileNum]-1],  IFedDipImag[step, NoOfDip[FileNum]-1, NoOfDip[FileNum]-1],' Amp. \n')
+        #print ('\n\n   For frequency = ', frequency_list[step], ' MHz')
+        #print ('  ---------------------------- \n')
+        #print ('  Self full impedance of the dipole = ', Rinp[step, NoOfDip[FileNum]-1, NoOfDip[FileNum]-1], Xinp[step, NoOfDip[FileNum]-1, NoOfDip[FileNum]-1], ' Ohm' )
+        #print ('  Current in fed point of active dipole = ', IFedDipReal[step, NoOfDip[FileNum]-1, NoOfDip[FileNum]-1],  IFedDipImag[step, NoOfDip[FileNum]-1, NoOfDip[FileNum]-1],' Amp. \n')
 
 
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # !! Searching and reading the currennt in impedance load !!
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # !! Searching and reading the current in impedance load !!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # *** Seek for currents in loads ***
-        line = find_line_in_text_file (Data_File, '- - - CURRENTS AND LOCATION - - -', 29, line)
-        for i in range (6): line = Data_File.readline()   # Skip several lines
+        line = find_line_in_text_file (Data_File, '- - - CURRENTS AND LOCATION - - -', 29)
+        for i in range (5): line = Data_File.readline()   # Skip several lines
 
         for j in range (LoadNum):  # loop by number of loads
             intTemp = 0
-            while (intTemp != wires_with_loads[j]):
+            while (intTemp < wires_with_loads[j]):   # !=
                 line = Data_File.readline()
                 intTemp = int(line[6:12])
             if (segments_with_loads[j] < 1):    # if the number of segment = 1 we need to return to the begining of the line
-                stop
+                sys.exit('ERROR!')
             if (segments_with_loads[j] > 1):	# if the number of segment > 2 we need to skip lines
                 for i in range (segments_with_loads[j] - 1): line = Data_File.readline()   # Skip several lines
 
@@ -222,18 +230,18 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
             IFedDipReal[step, NoOfDip[FileNum]-1, DipNum-1] = float(line[49 : 60])
             IFedDipImag[step, NoOfDip[FileNum]-1, DipNum-1] = float(line[61 : 72])
 
-            # print ('  Dip No', DipNum, ' Wire No', wires_with_loads[j], ' Segm No', segments_with_loads[j])
-            # print ('  Current in the load No ', j+1, ' = ', IFedDipReal[step, NoOfDip[FileNum]-1, DipNum-1], IFedDipImag[step, NoOfDip[FileNum]-1, DipNum-1], ' Amp' )
+            #print ('  Dip No', DipNum, ' Wire No', wires_with_loads[j], ' Segm No', segments_with_loads[j])
+            #print ('  Current in the load No ', j+1, ' = ', IFedDipReal[step, NoOfDip[FileNum]-1, DipNum-1], IFedDipImag[step, NoOfDip[FileNum]-1, DipNum-1], ' Amp' )
 
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # !!  Reading of E values in radiation patterns  !!
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        line = find_line_in_text_file (Data_File, '- - - RADIATION PATTERNS - - -', 48, line)
+        line = find_line_in_text_file (Data_File, '- - - RADIATION PATTERNS - - -', 48)
         line = Data_File.readline()
         DistanceRP[FileNum, step] = float(line[60 : 74])
-        # print ('  Distance of RP calculations = ', DistanceRP[FileNum, step], ' m. \n')
+        #print ('\n  Distance of RP calculations = ', DistanceRP[FileNum, step], ' m. \n')
 
         for i in range (7): line = Data_File.readline()   # Skip several lines of table header
 
@@ -259,6 +267,8 @@ IFedDip = IFedDipReal + 1j * IFedDipImag
 Zinp = Rinp + 1j * Xinp
 del IFedDipReal, IFedDipImag, Rinp, Xinp
 
+
+
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # !!!              Processing data and calculating results                     !!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -268,7 +278,7 @@ print ('\n\n\n    Calculations started at: ', time.strftime("%H:%M:%S"), '  \n\n
 
 for step in range (num_of_frequencies):     # Loop by frequencies
 
-    # *** Mirroring of currents for cases where dipols were not excited ***
+    # *** Mirroring of currents for cases where dipoles were not excited ***
 
     for i in range (len(MirrorInto)):
         for j in range (ArrayInputNum):
@@ -278,20 +288,20 @@ for step in range (num_of_frequencies):     # Loop by frequencies
     # *** Calculations of Impedance matrices ***
 
     for i in range (NECfileNum):           # Loop by files
-        for k in range (ArrayInputNum):    # Loop by dipols
+        for k in range (ArrayInputNum):    # Loop by dipoles
             if k != (NoOfDip[i]-1):
                 Zinp[step, NoOfDip[i]-1, k] = - (IFedDip[step, NoOfDip[i]-1, k] * loads_values[i] / IFedDip[step, NoOfDip[i]-1, NoOfDip[i]-1]) # !!!-!!!
 
 
     # Mirroring the Impedances for dipols that were not excited
-    for i in range (len(MirrorInto)):     # Loop by active dipols below array diagonal
-        for j in range (ArrayInputNum):         # Loop by dipols
+    for i in range (len(MirrorInto)):     # Loop by active dipoles below array diagonal
+        for j in range (ArrayInputNum):         # Loop by dipoles
             Zinp[step, MirrorInto[i]-1, ArrayInputNum - 1 - j] = Zinp[step, MirrorFrom[i]-1, j]  # ArrayInputNum + 1
 
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!  Mirroring of RP for noncalculated dipols  !!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!  Mirroring of RP for noncalculated dipoles  !!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     for i in range (len(MirrorInto)):   # loop by dipoles
         for t in range (181):           # loop by theta
             for p in range (180):       # loop by phi
@@ -359,7 +369,7 @@ for step in range (num_of_frequencies):	 # Loop by frequencies for displaying re
     print ('  --------------------------')
     print ('    Zinp (1, 1) = ', Zinp[step, 0, 0])
     print ('   Rsigm (1, 1) = ', RSigm[step, 0, 0])
-    print ('\n  Self radiation efficiency of the first dipole = ', round(Efficiency[step, i],3), ' %')
+    print ('\n  Self radiation efficiency of the first dipole = ', round(Efficiency[step, 0],3), ' %')   # i -> 0
 
 
 
@@ -503,7 +513,7 @@ for step in range (num_of_frequencies):	 # Loop by frequencies for results files
 # !!!                            F I G U R E S                                 !!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-print ('     Making figures... \n\n\n')
+print ('     Making figures... \n\n')
 
 # *** Figure of current absolute value ***
 for step in range (len(frequency_list)):
@@ -588,18 +598,18 @@ central = int(ArrayInputNum / 2) + 1
 # Frequency dependence of input impedance of the first dipole and the central one
 plt.figure()
 rc('font', weight='normal')
-plt.plot(frequency_list[1:len(frequency_list)], np.real(Zinp[0:len(frequency_list)-1, 0, 0]), color = 'C0', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
-plt.plot(frequency_list[1:len(frequency_list)], np.imag(Zinp[0:len(frequency_list)-1, 0, 0]), color = 'C1', linestyle = '-', linewidth = '1.00', label = 'Im(Zinp)')
-plt.plot(frequency_list[1:len(frequency_list)], np.absolute(Zinp[0:len(frequency_list)-1, 0, 0]), color = 'C4', linestyle = '-', linewidth = '1.00', label = 'Abs(Zinp)')
-plt.plot(frequency_list[1:len(frequency_list)], np.real(Zinp[0:len(frequency_list)-1, central, central]), color = 'C0', linestyle = '--', linewidth = '1.00', label = 'Re(Zinp)')
-plt.plot(frequency_list[1:len(frequency_list)], np.imag(Zinp[0:len(frequency_list)-1, central, central]), color = 'C1', linestyle = '--', linewidth = '1.00', label = 'Im(Zinp)')
-plt.plot(frequency_list[1:len(frequency_list)], np.absolute(Zinp[0:len(frequency_list)-1, central, central]), color = 'C4', linestyle = '--', linewidth = '1.00', label = 'Abs(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.real(Zinp[0:len(frequency_list)-1, 0, 0]), color = 'C0', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp) dipole # 1')
+plt.plot(frequency_list[1:len(frequency_list)], np.imag(Zinp[0:len(frequency_list)-1, 0, 0]), color = 'C1', linestyle = '-', linewidth = '1.00', label = 'Im(Zinp) dipole # 1')
+plt.plot(frequency_list[1:len(frequency_list)], np.absolute(Zinp[0:len(frequency_list)-1, 0, 0]), color = 'C4', linestyle = '-', linewidth = '1.00', label = 'Abs(Zinp) dipole # 1')
+plt.plot(frequency_list[1:len(frequency_list)], np.real(Zinp[0:len(frequency_list)-1, central, central]), color = 'C0', linestyle = '--', linewidth = '1.00', label = 'Re(Zinp) central dipole')
+plt.plot(frequency_list[1:len(frequency_list)], np.imag(Zinp[0:len(frequency_list)-1, central, central]), color = 'C1', linestyle = '--', linewidth = '1.00', label = 'Im(Zinp) central dipole')
+plt.plot(frequency_list[1:len(frequency_list)], np.absolute(Zinp[0:len(frequency_list)-1, central, central]), color = 'C4', linestyle = '--', linewidth = '1.00', label = 'Abs(Zinp) central dipole')
 plt.xlabel('Frequency, MHz')
 plt.ylabel('R, X, |Z|, Ohm')
 # plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
 plt.title('NEC modeling results', fontsize=7, x = 0.46, y = 1.005)
 plt.grid(b = True, which = 'both', color = 'silver', linestyle = '-')
-plt.legend(loc = 'lower center', fontsize = 10)
+plt.legend(loc = 'lower center', fontsize = 8)
 pylab.savefig(result_path + "/Self full impedances of first dipole.png", bbox_inches='tight', dpi = 160)
 # plt.show()
 plt.close('all')
@@ -607,20 +617,35 @@ plt.close('all')
 # Frequency dependence of radiation resistance of the first dipole and the central one
 plt.figure()
 rc('font', weight='normal')
-plt.plot(frequency_list[1:len(frequency_list)], np.real(RSigm[0:len(frequency_list)-1, 0, 0]), color = 'C0', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
-plt.plot(frequency_list[1:len(frequency_list)], np.real(RSigm[0:len(frequency_list)-1, central, central]), color = 'C1', linestyle = '-', linewidth = '1.00', label = 'Re(Zinp)')
+plt.plot(frequency_list[1:len(frequency_list)], np.real(RSigm[0:len(frequency_list)-1, 0, 0]), color = 'C0', linestyle = '-', linewidth = '1.00', label = 'Rsigm dipole # 1')
+plt.plot(frequency_list[1:len(frequency_list)], np.real(RSigm[0:len(frequency_list)-1, central, central]), color = 'C1', linestyle = '-', linewidth = '1.00', label = 'Rsigm central dipole')
 plt.xlabel('Frequency, MHz')
 plt.ylabel('Rsigm, Ohm')
 # plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
 plt.title('NEC modeling results', fontsize=7, x = 0.46, y = 1.005)
 plt.grid(b = True, which = 'both', color = 'silver', linestyle = '-')
-plt.legend(loc = 'lower center', fontsize = 10)
+plt.legend(loc = 'lower center', fontsize = 8)
 pylab.savefig(result_path + "/Self radiation resistances of first dipole.png", bbox_inches='tight', dpi = 160)
+# plt.show()
+plt.close('all')
+
+# Frequency dependence of radiation efficiency of the first dipole and the central one
+plt.figure()
+rc('font', weight='normal')
+plt.plot(frequency_list[1:], Efficiency[0:len(frequency_list)-1, 0], color = 'C0', linestyle = '-', linewidth = '1.00', label = 'Efficiency dipole # 1')
+plt.plot(frequency_list[1:], Efficiency[0:len(frequency_list)-1, central], color = 'C1', linestyle = '-', linewidth = '1.00', label = 'Efficiency central dipole')
+plt.xlabel('Frequency, MHz')
+plt.ylabel('Efficiency, %')
+# plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
+plt.title('NEC modeling results', fontsize=7, x = 0.46, y = 1.005)
+plt.grid(b = True, which = 'both', color = 'silver', linestyle = '-')
+plt.legend(loc = 'lower center', fontsize = 8)
+pylab.savefig(result_path + "/Self radiation efficiency.png", bbox_inches='tight', dpi = 160)
 # plt.show()
 plt.close('all')
 
 
 endTime = time.time()
-print('\n\n\n  The program execution lasted for ', round((endTime - startTime), 2), 'seconds (',
+print('\n\n  The program execution lasted for ', round((endTime - startTime), 2), 'seconds (',
                 round((endTime - startTime)/60, 2), 'min. ) \n')
 print('\n      *** Program ' + Software_name + ' has finished! *** \n\n\n')
