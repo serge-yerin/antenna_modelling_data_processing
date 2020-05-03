@@ -1,5 +1,5 @@
 # Python3
-Software_version = '2020.03.21'
+Software_version = '2020.05.02'
 Software_name = 'Array Input and Radiation Impedance Matrix Calculator for NEC4 results'
 
 #             array_input_and_rad_impedance_matrix_calc
@@ -118,8 +118,8 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
     # *** Opening NECoutput file ***
     Data_File = open(FileName, "r")
 
-    print ('\n **********************************************************************')
-    print ('\n Reading file: ', FileName, ' ')
+    print (' **********************************************************************')
+    print ('\n * Reading file: ', FileName, ' ')
 
 
     #  Searching the lines where loads are listed
@@ -160,7 +160,7 @@ for FileNum in range (len(NoOfDip)):	# Main loop by NEC output files
         if line.startswith('                                 - - - - - - FREQUENCY - - - - - -'):
             num_of_frequencies += 1
 
-    print ('\n  Number of frequencies analyzed = ', num_of_frequencies, ' ')
+    print ('   Number of frequencies analyzed = ', num_of_frequencies, ' ')
 
     if print_or_not == 1: print (' **********************************************************************')
 
@@ -296,14 +296,14 @@ for step in range (num_of_frequencies):     # Loop by frequencies
             Zinp[step, MirrorInto[i]-1, ArrayInputNum - 1 - j] = Zinp[step, MirrorFrom[i]-1, j]  # ArrayInputNum + 1
 
     # Quadrant 1 mirror
-    for i in range (len(MirrorInto)):     # Loop by
+    for i in range (len(MirrorInto_1)):     # Loop by
         for j in range (ArrayInputNum):         # Loop by dipoles
             Zinp[step, MirrorInto_1[i]-1, Partners_1[j]-1] = Zinp[step, MirrorFrom[i]-1, j]
 
     # Quadrant 2 mirror
-    for i in range (len(MirrorInto)):     # Loop by
+    for i in range (len(MirrorInto_2)):     # Loop by
         for j in range (ArrayInputNum):         # Loop by dipoles
-            Zinp[step, MirrorInto_2[i]-1, Partners_1[j]-1] = Zinp[step, MirrorFrom[i]-1, j]
+            Zinp[step, MirrorInto_2[i]-1, Partners_2[j]-1] = Zinp[step, MirrorFrom[i]-1, j]
 
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
