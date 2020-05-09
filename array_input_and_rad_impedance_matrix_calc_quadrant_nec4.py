@@ -22,15 +22,15 @@ path_to_data = 'DATA/'
 
 NoOfWiresPerDipole = 98     # Number of wires per dipole (not segments!) needed to find loads  # 434
 ArrayInputNum = 30          # Array inputs number (total number of dipoles in array or inputs of dipoles)
-num_of_freq = 30            # Maximal possible number of frequencies analyzed
+num_of_freq = 5            # Maximal possible number of frequencies analyzed
 print_or_not = 0
 
 # Rectangular UTR-2 antenna array 6 * 5 = 30 dipoles
 NoOfDip =      [1,   2,  3,  7,  8,  9, 13, 14, 15]       # Dipoles being excited
 MirrorFrom =   [1,   2,  3,  7,  8,  9, 13, 14, 15]	      # Active dipoles first quadrant
-MirrorInto =   [30, 29, 28, 24, 23, 22, 18, 17, 16]       # Passive dipoles fourth quadrant
-MirrorInto_1 = [25, 26, 27, 19, 20, 21]                   # Passive dipoles third quadrant
-MirrorInto_2 = [ 6,  5,  4, 12, 11, 10]                   # Passive dipoles third quadrant
+MirrorInto =   [30, 29, 28, 24, 23, 22, 18, 17, 16]       # Passive dipoles fourth quadrant # Cardinal point symmetry
+MirrorInto_1 = [25, 26, 27, 19, 20, 21]                   # Passive dipoles third quadrant  # Horizontal mirror
+MirrorInto_2 = [ 6,  5,  4, 12, 11, 10]                   # Passive dipoles second quadrant  # Vertical mirror
 # All dipoles [ 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
 Partners_1 =  [25,26,27,28,29,30,19,20,21,22,23,24,13,14,15,16,17,18, 7, 8, 9,10,11,12, 1, 2, 3, 4, 5, 6]
 Partners_2 =  [ 6, 5, 4, 3, 2, 1,12,11,10, 9, 8, 7,18,17,16,15,14,13,24,23,22,21,20,19,30,29,28,27,26,25]
@@ -261,9 +261,85 @@ del IFedDipReal, IFedDipImag, Rinp, Xinp
 
 print ('\n\n\n    Calculations started at: ', time.strftime("%H:%M:%S"), '  \n\n')
 
+# CURRENTS MIRRORING
+# Diagonal mirror
+for i in range(len(MirrorInto)):
+    for j in range(ArrayInputNum):
+        IFedDip[:, MirrorInto[i] - 1, j] = (IFedDip[:, MirrorFrom[i] - 1, ArrayInputNum - 1 - j])  # !!!  ArrayInputNum+1
+
+# Quadrant 1 mirror
+for i in range (len(MirrorInto_1)):
+    for j in range (ArrayInputNum):
+        IFedDip[:, MirrorInto_1[i]-1, j] = (IFedDip[:, MirrorFrom[i]-1, Partners_1[j]-1])
+
+# Quadrant 2 mirror
+for i in range (len(MirrorInto_2)):
+    for j in range (ArrayInputNum):
+        IFedDip[:, MirrorInto_2[i]-1, j] = (IFedDip[:, MirrorFrom[i]-1, Partners_2[j]-1])
+
+
+# *** Calculations of Impedance matrices ***
+
+for i in range (NECfileNum):           # Loop by files
+    for k in range (ArrayInputNum):    # Loop by dipoles
+        if k != (NoOfDip[i]-1):
+            Zinp[:, NoOfDip[i]-1, k] = - (IFedDip[:, NoOfDip[i]-1, k] * loads_values[i] / IFedDip[:, NoOfDip[i]-1, NoOfDip[i]-1]) # !!!-!!!
+
+
+# Mirroring the Impedances for dipoles that were not excited
+
+for i in range (len(MirrorInto)):     # Loop by active dipoles below array diagonal
+    for j in range (ArrayInputNum):         # Loop by dipoles
+        Zinp[:, MirrorInto[i]-1, ArrayInputNum - 1 - j] = Zinp[:, MirrorFrom[i]-1, j]  # ArrayInputNum + 1
+
+# Quadrant 1 mirror
+for i in range (len(MirrorInto_1)):     # Loop by
+    for j in range (ArrayInputNum):         # Loop by dipoles
+        Zinp[:, MirrorInto_1[i]-1, Partners_1[j]-1] = Zinp[:, MirrorFrom[i]-1, j]
+
+# Quadrant 2 mirror
+for i in range (len(MirrorInto_2)):     # Loop by
+    for j in range (ArrayInputNum):         # Loop by dipoles
+        Zinp[:, MirrorInto_2[i]-1, Partners_2[j]-1] = Zinp[:, MirrorFrom[i]-1, j]
+
+
+# PATTERNS MIRRORING
+
+# Cardinal point mirror
+ETHcmplx_tmp = np.zeros_like(ETHcmplx)
+EPHcmplx_tmp = np.zeros_like(EPHcmplx)
+for i in range (len(MirrorInto)):   # loop by dipoles
+
+    for p in range (360):       # loop by phi
+        ETHcmplx_tmp[:, MirrorInto[i]-1, :, p] = ETHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
+        EPHcmplx_tmp[:, MirrorInto[i]-1, :, p] = EPHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
+    for p in range(180):
+        ETHcmplx[:, MirrorInto[i]-1, :,     p] = ETHcmplx_tmp[:, MirrorInto[i]-1, :, 179-p]
+        ETHcmplx[:, MirrorInto[i]-1, :, 180+p] = ETHcmplx_tmp[:, MirrorInto[i]-1, :, 359-p]
+        EPHcmplx[:, MirrorInto[i]-1, :,     p] = EPHcmplx_tmp[:, MirrorInto[i]-1, :, 179-p]
+        EPHcmplx[:, MirrorInto[i]-1, :, 180+p] = EPHcmplx_tmp[:, MirrorInto[i]-1, :, 359-p]
+
+del ETHcmplx_tmp, EPHcmplx_tmp
+
+
+# Horizontal mirror
+for i in range (len(MirrorInto_1)):   # loop by dipoles
+    for p in range (360):       # loop by phi
+        ETHcmplx[:, MirrorInto_1[i]-1, :, p] = ETHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
+        EPHcmplx[:, MirrorInto_1[i]-1, :, p] = EPHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
+
+# Vertical mirror
+for i in range (len(MirrorInto_2)):   # loop by dipoles
+    for p in range (180):       # loop by phi
+        ETHcmplx[:, MirrorInto_2[i]-1, :,     p] = ETHcmplx[:, MirrorFrom[i]-1, :, 179-p]  # -
+        EPHcmplx[:, MirrorInto_2[i]-1, :,     p] = EPHcmplx[:, MirrorFrom[i]-1, :, 179-p]  # -
+        ETHcmplx[:, MirrorInto_2[i]-1, :, 180+p] = ETHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
+        EPHcmplx[:, MirrorInto_2[i]-1, :, 180+p] = EPHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
+
+
 
 for step in range (num_of_frequencies):     # Loop by frequencies
-
+    '''
     # *** Mirroring of currents for cases where dipoles were not excited ***
     # Diagonal mirror
     for i in range (len(MirrorInto)):
@@ -274,21 +350,18 @@ for step in range (num_of_frequencies):     # Loop by frequencies
     for i in range (len(MirrorInto_1)):
         for j in range (ArrayInputNum):
             IFedDip[step, MirrorInto_1[i]-1, j] = (IFedDip[step, MirrorFrom[i]-1, Partners_1[j]-1])
-
+    
     # Quadrant 2 mirror
     for i in range (len(MirrorInto_2)):
         for j in range (ArrayInputNum):
             IFedDip[step, MirrorInto_2[i]-1, j] = (IFedDip[step, MirrorFrom[i]-1, Partners_2[j]-1])
-
-
-
+    '''
     # *** Calculations of Impedance matrices ***
-
+    '''
     for i in range (NECfileNum):           # Loop by files
         for k in range (ArrayInputNum):    # Loop by dipoles
             if k != (NoOfDip[i]-1):
                 Zinp[step, NoOfDip[i]-1, k] = - (IFedDip[step, NoOfDip[i]-1, k] * loads_values[i] / IFedDip[step, NoOfDip[i]-1, NoOfDip[i]-1]) # !!!-!!!
-
 
     # Mirroring the Impedances for dipols that were not excited
     for i in range (len(MirrorInto)):     # Loop by active dipoles below array diagonal
@@ -305,10 +378,11 @@ for step in range (num_of_frequencies):     # Loop by frequencies
         for j in range (ArrayInputNum):         # Loop by dipoles
             Zinp[step, MirrorInto_2[i]-1, Partners_2[j]-1] = Zinp[step, MirrorFrom[i]-1, j]
 
-
+    '''
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # !!  Mirroring of RP for noncalculated dipoles  !!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    '''
     for i in range (len(MirrorInto)):   # loop by dipoles
         for t in range (181):           # loop by theta
             for p in range (180):       # loop by phi
@@ -317,19 +391,8 @@ for step in range (num_of_frequencies):     # Loop by frequencies
             for p in range (180, 361):
                 ETHcmplx[step, MirrorInto[i]-1, t, p-180] = - ETHcmplx[step, MirrorFrom[i]-1, t, p]
                 EPHcmplx[step, MirrorInto[i]-1, t, p-180] = - EPHcmplx[step, MirrorFrom[i]-1, t, p]
-
     '''
-    # Rectangular UTR-2 antenna array 6 * 5 = 30 dipoles
-    NoOfDip =      [1,   2,  3,  7,  8,  9, 13, 14, 15]       # Dipoles being excited
-    MirrorFrom =   [1,   2,  3,  7,  8,  9, 13, 14, 15]	      # Active dipoles first quadrant
-    MirrorInto =   [30, 29, 28, 24, 23, 22, 18, 17, 16]       # Passive dipoles fourth quadrant
-    MirrorInto_1 = [25, 26, 27, 19, 20, 21]                   # Passive dipoles third quadrant
-    MirrorInto_2 = [ 6,  5,  4, 12, 11, 10]                   # Passive dipoles third quadrant
-    # All dipoles [ 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
-    Partners_1 =  [25,26,27,28,29,30,19,20,21,22,23,24,13,14,15,16,17,18, 7, 8, 9,10,11,12, 1, 2, 3, 4, 5, 6]
-    Partners_2 =  [ 6, 5, 4, 3, 2, 1,12,11,10, 9, 8, 7,18,17,16,15,14,13,24,23,22,21,20,19,30,29,28,27,26,25]
     '''
-
     for i in range (len(MirrorInto_1)):   # loop by dipoles
         for t in range (181):           # loop by theta
             for p in range (180):       # loop by phi
@@ -347,7 +410,7 @@ for step in range (num_of_frequencies):     # Loop by frequencies
             for p in range (180, 361):
                 ETHcmplx[step, MirrorInto_2[i]-1, t, p-180] = - ETHcmplx[step, MirrorFrom[i]-1, t, p]
                 EPHcmplx[step, MirrorInto_2[i]-1, t, p-180] = - EPHcmplx[step, MirrorFrom[i]-1, t, p]
-
+    '''
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # !!         Integrals calculation              !!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -357,15 +420,17 @@ for step in range (num_of_frequencies):     # Loop by frequencies
 
                 # Forming the integration elements for Theta angle
                 for t in range (91):
-                    for p in range (361):
-                        Points[t, p] = ETHcmplx[step, i, t+90, p] * np.conj(ETHcmplx[step, j, t+90, p]) * (np.sin(t*pi/180.) + 1j*0.0)
+                    #for p in range (361):
+                    #    Points[t, p] = ETHcmplx[step, i, t+90, p] * np.conj(ETHcmplx[step, j, t+90, p]) * (np.sin(t*pi/180.) + 1j*0.0)
+                    Points[t, :] = ETHcmplx[step, i, t+90, :] * np.conj(ETHcmplx[step, j, t+90, :]) * (np.sin(t*pi/180.) + 1j*0.0)
 
                 Integral1 = intergration_trap_2d (0, 90, 0, 360, 90, 360, Points)
 
                 # Forming the integration elements for Phi component
                 for t in range (91):
-                    for p in range (361):
-                        Points[t, p] = EPHcmplx[step, i, t+90, p] * np.conj(EPHcmplx[step, j, t+90, p]) * (np.sin(t*pi/180.) + 1j*0.0)
+                    #for p in range (361):
+                    #    Points[t, p] = EPHcmplx[step, i, t+90, p] * np.conj(EPHcmplx[step, j, t+90, p]) * (np.sin(t*pi/180.) + 1j*0.0)
+                    Points[t, :] = EPHcmplx[step, i, t+90, :] * np.conj(EPHcmplx[step, j, t+90, :]) * (np.sin(t*pi/180.) + 1j*0.0)
 
                 # Calculating of integrals by Phi angle
                 Integral2 = intergration_trap_2d (0, 90, 0, 360, 90, 360, Points)
@@ -375,13 +440,13 @@ for step in range (num_of_frequencies):     # Loop by frequencies
                 RSigm[step, i, j] = ((Integral1 + Integral2) * np.power(DistanceRP[0, 0], 2)) / (120.0 * pi * (IFedDip[step, i, i] * np.conj(IFedDip[step, j, j])))
                 RSigm[step, j, i] = np.conj(RSigm[step, i, j])
 
-
-    # *** Calculations of self radiation efficiencies of dipols ***
-    for i in range (ArrayInputNum):
-        Efficiency[step, i] = (np.real(RSigm[step,i,i]) / np.real(Zinp[step,i,i])) * 100
-
     currentTime = time.strftime("%H:%M:%S")
     print ('\n    Done for frequency = ', frequency_list[step], ' MHz at: ', currentTime, ' ')
+
+# *** Calculations of self radiation efficiencies of dipols ***
+for i in range (ArrayInputNum):
+    Efficiency[:, i] = (np.real(RSigm[:,i,i]) / np.real(Zinp[:,i,i])) * 100
+
 
 # End of loop by frequencies
 
