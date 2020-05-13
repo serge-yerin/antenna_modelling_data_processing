@@ -18,12 +18,14 @@ Software_name = 'Array Input and Radiation Impedance Matrix Calculator for NEC4 
 # *************************************************************
 #                         PARAMETERS                          *
 # *************************************************************
-path_to_data = 'DATA/'
+path_to_data = 'f:/python/antenna_modelling_data_processing/DATA/'
 
 NoOfWiresPerDipole = 98     # Number of wires per dipole (not segments!) needed to find loads  # 434
 ArrayInputNum = 30          # Array inputs number (total number of dipoles in array or inputs of dipoles)
 num_of_freq = 5            # Maximal possible number of frequencies analyzed
 print_or_not = 0
+make_txt_or_not = 0
+
 
 # Rectangular UTR-2 antenna array 6 * 5 = 30 dipoles
 NoOfDip =      [1,   2,  3,  7,  8,  9, 13, 14, 15]       # Dipoles being excited
@@ -304,81 +306,52 @@ for i in range (len(MirrorInto_2)):     # Loop by
 
 
 # PATTERNS MIRRORING
-
+#'''
 # Cardinal point mirror
 ETHcmplx_tmp = np.zeros_like(ETHcmplx)
 EPHcmplx_tmp = np.zeros_like(EPHcmplx)
 for i in range (len(MirrorInto)):   # loop by dipoles
-
-    for p in range (360):       # loop by phi
-        ETHcmplx_tmp[:, MirrorInto[i]-1, :, p] = ETHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
-        EPHcmplx_tmp[:, MirrorInto[i]-1, :, p] = EPHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
-    for p in range(180):
-        ETHcmplx[:, MirrorInto[i]-1, :,     p] = ETHcmplx_tmp[:, MirrorInto[i]-1, :, 179-p]
-        ETHcmplx[:, MirrorInto[i]-1, :, 180+p] = ETHcmplx_tmp[:, MirrorInto[i]-1, :, 359-p]
-        EPHcmplx[:, MirrorInto[i]-1, :,     p] = EPHcmplx_tmp[:, MirrorInto[i]-1, :, 179-p]
-        EPHcmplx[:, MirrorInto[i]-1, :, 180+p] = EPHcmplx_tmp[:, MirrorInto[i]-1, :, 359-p]
-
+    for p in range (361):       # loop by phi
+        ETHcmplx_tmp[:, MirrorInto[i]-1, :, p] = - ETHcmplx[:, MirrorFrom[i]-1, :, 360-p]  # -
+        EPHcmplx_tmp[:, MirrorInto[i]-1, :, p] = - EPHcmplx[:, MirrorFrom[i]-1, :, 360-p]  # -
+    for p in range(181):
+        ETHcmplx[:, MirrorInto[i]-1, :,     p] = ETHcmplx_tmp[:, MirrorInto[i]-1, :, 180-p]
+        ETHcmplx[:, MirrorInto[i]-1, :, 180+p] = ETHcmplx_tmp[:, MirrorInto[i]-1, :, 360-p]
+        EPHcmplx[:, MirrorInto[i]-1, :,     p] = EPHcmplx_tmp[:, MirrorInto[i]-1, :, 180-p]
+        EPHcmplx[:, MirrorInto[i]-1, :, 180+p] = EPHcmplx_tmp[:, MirrorInto[i]-1, :, 360-p]
 del ETHcmplx_tmp, EPHcmplx_tmp
-
+#'''
 
 # Horizontal mirror
+#'''
 for i in range (len(MirrorInto_1)):   # loop by dipoles
-    for p in range (360):       # loop by phi
-        ETHcmplx[:, MirrorInto_1[i]-1, :, p] = ETHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
-        EPHcmplx[:, MirrorInto_1[i]-1, :, p] = EPHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
+    for p in range (361):       # loop by phi
+        ETHcmplx[:, MirrorInto_1[i]-1, :, p] = - ETHcmplx[:, MirrorFrom[i]-1, :, 360-p]  # - !!!
+        EPHcmplx[:, MirrorInto_1[i]-1, :, p] = EPHcmplx[:, MirrorFrom[i]-1, :, 360-p]
+#'''
 
-# Vertical mirror
+#'''
+# Vertical mirror - seems wrong
 for i in range (len(MirrorInto_2)):   # loop by dipoles
-    for p in range (180):       # loop by phi
-        ETHcmplx[:, MirrorInto_2[i]-1, :,     p] = ETHcmplx[:, MirrorFrom[i]-1, :, 179-p]  # -
-        EPHcmplx[:, MirrorInto_2[i]-1, :,     p] = EPHcmplx[:, MirrorFrom[i]-1, :, 179-p]  # -
-        ETHcmplx[:, MirrorInto_2[i]-1, :, 180+p] = ETHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
-        EPHcmplx[:, MirrorInto_2[i]-1, :, 180+p] = EPHcmplx[:, MirrorFrom[i]-1, :, 359-p]  # -
+    for p in range (181):       # loop by phi
+        ETHcmplx[:, MirrorInto_2[i]-1, :,     p] = ETHcmplx[:, MirrorFrom[i]-1, :, 180-p]# * (1.0 - 1j)  # -
+        EPHcmplx[:, MirrorInto_2[i]-1, :,     p] = - EPHcmplx[:, MirrorFrom[i]-1, :, 180-p] #* (1.0 - 1j)  # -
+        ETHcmplx[:, MirrorInto_2[i]-1, :, 180+p] = ETHcmplx[:, MirrorFrom[i]-1, :, 360-p]# * (1.0 - 1j)  # -
+        EPHcmplx[:, MirrorInto_2[i]-1, :, 180+p] = - EPHcmplx[:, MirrorFrom[i]-1, :, 360-p] #* (1.0 - 1j)  # -
+#'''
+
+# Vertical mirror of MirrorInto_2 must be correct but seems wrong
+# Vertical mirror of MirrorInto_2 multiplied by (-1.0 + 1j) is wrong
+# Vertical mirror of MirrorInto_2 multiplied by (-1.0 - 1j) is wrong
+# Vertical mirror of MirrorInto_2 multiplied by ( 1.0 - 1j) is wrong
+# Horizontal mirror of MirrorInto_2 does not work
 
 
 
 for step in range (num_of_frequencies):     # Loop by frequencies
-    '''
-    # *** Mirroring of currents for cases where dipoles were not excited ***
-    # Diagonal mirror
-    for i in range (len(MirrorInto)):
-        for j in range (ArrayInputNum):
-            IFedDip[step, MirrorInto[i]-1, j] = (IFedDip[step, MirrorFrom[i]-1, ArrayInputNum-1-j]) # !!!  ArrayInputNum+1
 
-    # Quadrant 1 mirror
-    for i in range (len(MirrorInto_1)):
-        for j in range (ArrayInputNum):
-            IFedDip[step, MirrorInto_1[i]-1, j] = (IFedDip[step, MirrorFrom[i]-1, Partners_1[j]-1])
-    
-    # Quadrant 2 mirror
-    for i in range (len(MirrorInto_2)):
-        for j in range (ArrayInputNum):
-            IFedDip[step, MirrorInto_2[i]-1, j] = (IFedDip[step, MirrorFrom[i]-1, Partners_2[j]-1])
-    '''
-    # *** Calculations of Impedance matrices ***
-    '''
-    for i in range (NECfileNum):           # Loop by files
-        for k in range (ArrayInputNum):    # Loop by dipoles
-            if k != (NoOfDip[i]-1):
-                Zinp[step, NoOfDip[i]-1, k] = - (IFedDip[step, NoOfDip[i]-1, k] * loads_values[i] / IFedDip[step, NoOfDip[i]-1, NoOfDip[i]-1]) # !!!-!!!
 
-    # Mirroring the Impedances for dipols that were not excited
-    for i in range (len(MirrorInto)):     # Loop by active dipoles below array diagonal
-        for j in range (ArrayInputNum):         # Loop by dipoles
-            Zinp[step, MirrorInto[i]-1, ArrayInputNum - 1 - j] = Zinp[step, MirrorFrom[i]-1, j]  # ArrayInputNum + 1
 
-    # Quadrant 1 mirror
-    for i in range (len(MirrorInto_1)):     # Loop by
-        for j in range (ArrayInputNum):         # Loop by dipoles
-            Zinp[step, MirrorInto_1[i]-1, Partners_1[j]-1] = Zinp[step, MirrorFrom[i]-1, j]
-
-    # Quadrant 2 mirror
-    for i in range (len(MirrorInto_2)):     # Loop by
-        for j in range (ArrayInputNum):         # Loop by dipoles
-            Zinp[step, MirrorInto_2[i]-1, Partners_2[j]-1] = Zinp[step, MirrorFrom[i]-1, j]
-
-    '''
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # !!  Mirroring of RP for noncalculated dipoles  !!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -469,144 +442,144 @@ for step in range (num_of_frequencies):	 # Loop by frequencies for displaying re
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # !!!              Writing data and results to output files                    !!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-print ('\n\n\n     Writing the results to output files... \n\n\n')
-
-
-# *** Creating files for results ***
-CurrentMatrixFile = open(result_path + "/Matrices of Currents.txt", "w")              # 24
-ImpedanceMatrixFile = open(result_path + "/Matrices of Impedances.txt", "w")          # 26
-RadImpMatrixFile = open(result_path + "/Matrices of Radiation Impedances.txt", "w")   # 27
-
-for step in range (num_of_frequencies):	 # Loop by frequencies for results files writing
+if make_txt_or_not > 0:
+    print ('\n\n\n     Writing the results to output files... \n')
 
 
-    # *** Matrix of complex currents in dipoles.txt ***
-    CurrentMatrixFile.write('\n\n    *** Matrix of currents in fed points of dipoles f = %6.3f MHz ***  \n\n' % frequency_list[step])
-    data = ['                                  {:2d}'.format(i+2) for i in range(ArrayInputNum-1)]
-    CurrentMatrixFile.write('Dip No                1' + ''.join(data)+ '   \n\n')
-    data = ['          Re                Im      '.format() for i in range(ArrayInputNum-1)]
-    CurrentMatrixFile.write('Dip No        Re                Im      ' + ''.join(data)+ '   \n')
-    for k in range(ArrayInputNum):
-        data = ['   {:+14.8e}   {:+14.8e}'.format(np.real(IFedDip[step, k, i]), np.imag(IFedDip[step, k, i])) for i in range(ArrayInputNum)]
-        CurrentMatrixFile.write(' {:2d}'.format(k+1) + ''.join(data)+ '   \n')
+    # *** Creating files for results ***
+    CurrentMatrixFile = open(result_path + "/Matrices of Currents.txt", "w")              # 24
+    ImpedanceMatrixFile = open(result_path + "/Matrices of Impedances.txt", "w")          # 26
+    RadImpMatrixFile = open(result_path + "/Matrices of Radiation Impedances.txt", "w")   # 27
+
+    for step in range (num_of_frequencies):	 # Loop by frequencies for results files writing
 
 
-    # *** Writing impedances to file ***
-    ImpedanceMatrixFile.write('\n\n    *** Matrix of impedances of dipoles f = %6.3f MHz ***  \n\n' % frequency_list[step])
-    data = ['                                  {:2d}'.format(i+2) for i in range(ArrayInputNum-1)]
-    ImpedanceMatrixFile.write('Dip No                1' + ''.join(data)+ '   \n\n')
-    data = ['          Re                Im      '.format() for i in range(ArrayInputNum-1)]
-    ImpedanceMatrixFile.write('Dip No        Re                Im      ' + ''.join(data)+ '   \n')
-    for k in range(ArrayInputNum):
-        data = ['   {:+14.8e}   {:+14.8e}'.format(np.real(Zinp[step, k, i]), np.imag(Zinp[step, k, i])) for i in range(ArrayInputNum)]
-        ImpedanceMatrixFile.write(' {:2d}'.format(k+1) + ''.join(data)+ '   \n')
+        # *** Matrix of complex currents in dipoles.txt ***
+        CurrentMatrixFile.write('\n\n    *** Matrix of currents in fed points of dipoles f = %6.3f MHz ***  \n\n' % frequency_list[step])
+        data = ['                                  {:2d}'.format(i+2) for i in range(ArrayInputNum-1)]
+        CurrentMatrixFile.write('Dip No                1' + ''.join(data)+ '   \n\n')
+        data = ['          Re                Im      '.format() for i in range(ArrayInputNum-1)]
+        CurrentMatrixFile.write('Dip No        Re                Im      ' + ''.join(data)+ '   \n')
+        for k in range(ArrayInputNum):
+            data = ['   {:+14.8e}   {:+14.8e}'.format(np.real(IFedDip[step, k, i]), np.imag(IFedDip[step, k, i])) for i in range(ArrayInputNum)]
+            CurrentMatrixFile.write(' {:2d}'.format(k+1) + ''.join(data)+ '   \n')
 
 
-    # *** Writing radiation resistances to file ***
-    RadImpMatrixFile.write('\n\n    *** Matrix of radiation resistances of dipoles f = %6.3f MHz ***  \n\n' % frequency_list[step])
-    data = ['                                  {:2d}'.format(i+2) for i in range(ArrayInputNum-1)]
-    RadImpMatrixFile.write('Dip No                1' + ''.join(data)+ '   \n\n')
-    data = ['          Re                Im      '.format() for i in range(ArrayInputNum-1)]
-    RadImpMatrixFile.write('Dip No        Re                Im      ' + ''.join(data)+ '   \n')
-    for k in range(ArrayInputNum):
-        data = ['   {:+14.8e}   {:+14.8e}'.format(np.real(RSigm[step, k, i]), np.imag(RSigm[step, k, i])) for i in range(ArrayInputNum)]
-        RadImpMatrixFile.write(' {:2d}'.format(k+1) + ''.join(data)+ '   \n')
+        # *** Writing impedances to file ***
+        ImpedanceMatrixFile.write('\n\n    *** Matrix of impedances of dipoles f = %6.3f MHz ***  \n\n' % frequency_list[step])
+        data = ['                                  {:2d}'.format(i+2) for i in range(ArrayInputNum-1)]
+        ImpedanceMatrixFile.write('Dip No                1' + ''.join(data)+ '   \n\n')
+        data = ['          Re                Im      '.format() for i in range(ArrayInputNum-1)]
+        ImpedanceMatrixFile.write('Dip No        Re                Im      ' + ''.join(data)+ '   \n')
+        for k in range(ArrayInputNum):
+            data = ['   {:+14.8e}   {:+14.8e}'.format(np.real(Zinp[step, k, i]), np.imag(Zinp[step, k, i])) for i in range(ArrayInputNum)]
+            ImpedanceMatrixFile.write(' {:2d}'.format(k+1) + ''.join(data)+ '   \n')
 
 
-
-    # *** Writing currents on dipols inputs to files for MatCAD
-    FileName = (result_path + '/Currents on dipols inputs f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
-    CurrentFile = open(FileName, "w")  # 6
-    for k in range (ArrayInputNum):
-        data = ['   {:+14.8e}'.format(np.real(IFedDip[step, i, k])) for i in range(ArrayInputNum)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
-    for k in range (ArrayInputNum):
-        data = ['   {:+14.8e}'.format(np.imag(IFedDip[step, i, k])) for i in range(ArrayInputNum)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
-    CurrentFile.close()
-
-
-    # *** Writing normalized currents on dipols inputs to files for MatCAD ***
-    FileName = (result_path + '/Normalized Currents on dipols inputs f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
-    CurrentFile = open(FileName, "w")  # 6
-    for k in range (ArrayInputNum):
-        data = ['   {:+14.8e}'.format(np.real(IFedDip[step, i, k] / IFedDip[step, i, i])) for i in range(ArrayInputNum)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
-    for k in range (ArrayInputNum):
-        data = ['   {:+14.8e}'.format(np.imag(IFedDip[step, i, k] / IFedDip[step, i, i])) for i in range(ArrayInputNum)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
-    CurrentFile.close()
-
-
-    # *** Writing impedances of dipols to files for MatCAD ***
-    FileName = (result_path + '/Impedances of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
-    CurrentFile = open(FileName, "w")  # 6
-    for k in range (ArrayInputNum):
-        data = ['   {:+14.8e}'.format(np.real(Zinp[step, i, k])) for i in range(ArrayInputNum)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
-    for k in range (ArrayInputNum):
-        data = ['   {:+14.8e}'.format(np.imag(Zinp[step, i, k])) for i in range(ArrayInputNum)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
-    CurrentFile.close()
-
-
-    # *** Writing radiation resistances of dipols to files for MatCAD ***
-    FileName = (result_path + '/Radiation resistances of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
-    CurrentFile = open(FileName, "w")  # 6
-    for k in range (ArrayInputNum):
-        data = ['   {:+14.8e}'.format(np.real(RSigm[step, i, k])) for i in range(ArrayInputNum)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
-    for k in range (ArrayInputNum):
-        data = ['   {:+14.8e}'.format(np.imag(RSigm[step, i, k])) for i in range(ArrayInputNum)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
-    CurrentFile.close()
+        # *** Writing radiation resistances to file ***
+        RadImpMatrixFile.write('\n\n    *** Matrix of radiation resistances of dipoles f = %6.3f MHz ***  \n\n' % frequency_list[step])
+        data = ['                                  {:2d}'.format(i+2) for i in range(ArrayInputNum-1)]
+        RadImpMatrixFile.write('Dip No                1' + ''.join(data)+ '   \n\n')
+        data = ['          Re                Im      '.format() for i in range(ArrayInputNum-1)]
+        RadImpMatrixFile.write('Dip No        Re                Im      ' + ''.join(data)+ '   \n')
+        for k in range(ArrayInputNum):
+            data = ['   {:+14.8e}   {:+14.8e}'.format(np.real(RSigm[step, k, i]), np.imag(RSigm[step, k, i])) for i in range(ArrayInputNum)]
+            RadImpMatrixFile.write(' {:2d}'.format(k+1) + ''.join(data)+ '   \n')
 
 
 
-    # *** Writing radiation efficiencies of dipols to files for MatCAD ***
-    FileName = (result_path + '/Radiation efficiencies of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
-    CurrentFile = open(FileName, "w")  # 6
-    for k in range (ArrayInputNum):
-        data = ['   {:+14.8e}'.format(Efficiency[step, i])]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
-    CurrentFile.close()
+        # *** Writing currents on dipols inputs to files for MatCAD
+        FileName = (result_path + '/Currents on dipols inputs f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
+        CurrentFile = open(FileName, "w")  # 6
+        for k in range (ArrayInputNum):
+            data = ['   {:+14.8e}'.format(np.real(IFedDip[step, i, k])) for i in range(ArrayInputNum)]
+            CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        for k in range (ArrayInputNum):
+            data = ['   {:+14.8e}'.format(np.imag(IFedDip[step, i, k])) for i in range(ArrayInputNum)]
+            CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        CurrentFile.close()
 
 
-    # *** Writing normalized Etheta RP to files for MatCAD ***
-    FileName = (result_path + '/Normalized to current Etheta RP f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
-    CurrentFile = open(FileName, "w")  # 6
-    for k in range (ArrayInputNum):
-        for t in range (91):
-            data = [' {:+14.8e}'.format(np.real(ETHcmplx[step,k,t+90,p] / IFedDip[step,k,k])) for p in range(361)]
-            CurrentFile.write('' + ''.join(data)+ ' \n')
-    for k in range (ArrayInputNum):
-        for t in range (91):
-            data = [' {:+14.8e}'.format(np.imag(ETHcmplx[step,k,t+90,p] / IFedDip[step,k,k])) for p in range(361)]
-            CurrentFile.write('' + ''.join(data)+ ' \n')
-    CurrentFile.close()
+        # *** Writing normalized currents on dipols inputs to files for MatCAD ***
+        FileName = (result_path + '/Normalized Currents on dipols inputs f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
+        CurrentFile = open(FileName, "w")  # 6
+        for k in range (ArrayInputNum):
+            data = ['   {:+14.8e}'.format(np.real(IFedDip[step, i, k] / IFedDip[step, i, i])) for i in range(ArrayInputNum)]
+            CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        for k in range (ArrayInputNum):
+            data = ['   {:+14.8e}'.format(np.imag(IFedDip[step, i, k] / IFedDip[step, i, i])) for i in range(ArrayInputNum)]
+            CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        CurrentFile.close()
+
+
+        # *** Writing impedances of dipols to files for MatCAD ***
+        FileName = (result_path + '/Impedances of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
+        CurrentFile = open(FileName, "w")  # 6
+        for k in range (ArrayInputNum):
+            data = ['   {:+14.8e}'.format(np.real(Zinp[step, i, k])) for i in range(ArrayInputNum)]
+            CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        for k in range (ArrayInputNum):
+            data = ['   {:+14.8e}'.format(np.imag(Zinp[step, i, k])) for i in range(ArrayInputNum)]
+            CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        CurrentFile.close()
+
+
+        # *** Writing radiation resistances of dipols to files for MatCAD ***
+        FileName = (result_path + '/Radiation resistances of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
+        CurrentFile = open(FileName, "w")  # 6
+        for k in range (ArrayInputNum):
+            data = ['   {:+14.8e}'.format(np.real(RSigm[step, i, k])) for i in range(ArrayInputNum)]
+            CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        for k in range (ArrayInputNum):
+            data = ['   {:+14.8e}'.format(np.imag(RSigm[step, i, k])) for i in range(ArrayInputNum)]
+            CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        CurrentFile.close()
 
 
 
-    # *** Writing normalized Ephi RP to files for MatCAD ***
-    FileName = (result_path + '/Normalized to current Ephi RP f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
-    CurrentFile = open(FileName, "w")  # 6
-    for k in range (ArrayInputNum):
-        for t in range (91):
-            data = [' {:+14.8e}'.format(np.real(EPHcmplx[step,k,t+90,p] / IFedDip[step,k,k])) for p in range(361)]
-            CurrentFile.write('' + ''.join(data)+ ' \n')
-    for k in range (ArrayInputNum):
-        for t in range (91):
-            data = [' {:+14.8e}'.format(np.imag(EPHcmplx[step,k,t+90,p] / IFedDip[step,k,k])) for p in range(361)]
-            CurrentFile.write('' + ''.join(data)+ ' \n')
-    CurrentFile.close()
+        # *** Writing radiation efficiencies of dipols to files for MatCAD ***
+        FileName = (result_path + '/Radiation efficiencies of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
+        CurrentFile = open(FileName, "w")  # 6
+        for k in range (ArrayInputNum):
+            data = ['   {:+14.8e}'.format(Efficiency[step, i])]
+            CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        CurrentFile.close()
+
+
+        # *** Writing normalized Etheta RP to files for MatCAD ***
+        FileName = (result_path + '/Normalized to current Etheta RP f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
+        CurrentFile = open(FileName, "w")  # 6
+        for k in range (ArrayInputNum):
+            for t in range (91):
+                data = [' {:+14.8e}'.format(np.real(ETHcmplx[step,k,t+90,p] / IFedDip[step,k,k])) for p in range(361)]
+                CurrentFile.write('' + ''.join(data)+ ' \n')
+        for k in range (ArrayInputNum):
+            for t in range (91):
+                data = [' {:+14.8e}'.format(np.imag(ETHcmplx[step,k,t+90,p] / IFedDip[step,k,k])) for p in range(361)]
+                CurrentFile.write('' + ''.join(data)+ ' \n')
+        CurrentFile.close()
+
+
+
+        # *** Writing normalized Ephi RP to files for MatCAD ***
+        FileName = (result_path + '/Normalized to current Ephi RP f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
+        CurrentFile = open(FileName, "w")  # 6
+        for k in range (ArrayInputNum):
+            for t in range (91):
+                data = [' {:+14.8e}'.format(np.real(EPHcmplx[step,k,t+90,p] / IFedDip[step,k,k])) for p in range(361)]
+                CurrentFile.write('' + ''.join(data)+ ' \n')
+        for k in range (ArrayInputNum):
+            for t in range (91):
+                data = [' {:+14.8e}'.format(np.imag(EPHcmplx[step,k,t+90,p] / IFedDip[step,k,k])) for p in range(361)]
+                CurrentFile.write('' + ''.join(data)+ ' \n')
+        CurrentFile.close()
 
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # !!!                            F I G U R E S                                 !!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-print ('     Making figures... \n\n')
+print ('\n\n\n     Making figures... \n\n')
 
 # *** Figure of current absolute value ***
 for step in range (len(frequency_list)):
