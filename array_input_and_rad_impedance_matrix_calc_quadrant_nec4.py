@@ -22,7 +22,7 @@ NoOfWiresPerDipole = 98     # Number of wires per dipole (not segments!) needed 
 ArrayInputNum = 30          # Array inputs number (total number of dipoles in array or inputs of dipoles)
 num_of_freq = 5             # Maximal possible number of frequencies analyzed
 print_or_not = 0
-make_txt_or_not = 1
+make_txt_or_not = 0
 
 # Rectangular UTR-2 antenna array 6 * 5 = 30 dipoles
 NoOfDip =      [1,   2,  3,  7,  8,  9, 13, 14, 15]       # Dipoles being excited
@@ -322,18 +322,22 @@ del ETHcmplx_tmp, EPHcmplx_tmp
 # Horizontal mirror (right to left)
 for i in range (len(MirrorInto_1)):   # loop by dipoles
     for p in range (361):             # loop by phi
-        ETHcmplx[:, MirrorInto_1[i]-1, :, p] = - ETHcmplx[:, MirrorFrom[i]-1, :, 360-p]  # - !!!
-        EPHcmplx[:, MirrorInto_1[i]-1, :, p] =   EPHcmplx[:, MirrorFrom[i]-1, :, 360-p]
+        ETHcmplx[:, MirrorInto_1[i]-1, :, p] =   (ETHcmplx[:, MirrorFrom[i]-1, :, 360-p])
+        EPHcmplx[:, MirrorInto_1[i]-1, :, p] = - (EPHcmplx[:, MirrorFrom[i]-1, :, 360-p]) # - !!!
+    #ETHcmplx[:, MirrorInto_1[i] - 1, :, :].real *= -1
+    #EPHcmplx[:, MirrorInto_1[i] - 1, :, :].real *= -1
+
+
 
 # Vertical mirror (up to down)
 for i in range (len(MirrorInto_2)):   # loop by dipoles
     for p in range (181):             # loop by phi
-        ETHcmplx[:, MirrorInto_2[i]-1, :,     p] =   ETHcmplx[:, MirrorFrom[i]-1, :, 180-p]
-        EPHcmplx[:, MirrorInto_2[i]-1, :,     p] = - EPHcmplx[:, MirrorFrom[i]-1, :, 180-p]
-        ETHcmplx[:, MirrorInto_2[i]-1, :, 180+p] =   ETHcmplx[:, MirrorFrom[i]-1, :, 360-p]
-        EPHcmplx[:, MirrorInto_2[i]-1, :, 180+p] = - EPHcmplx[:, MirrorFrom[i]-1, :, 360-p]
-
-
+        ETHcmplx[:, MirrorInto_2[i]-1, :,     p] = - (ETHcmplx[:, MirrorFrom[i]-1, :, 180-p]) # - !!!  np.conj() ! a.real *= factarr
+        EPHcmplx[:, MirrorInto_2[i]-1, :,     p] =   (EPHcmplx[:, MirrorFrom[i]-1, :, 180-p])
+        ETHcmplx[:, MirrorInto_2[i]-1, :, 180+p] = - (ETHcmplx[:, MirrorFrom[i]-1, :, 360-p]) # - !!!
+        EPHcmplx[:, MirrorInto_2[i]-1, :, 180+p] =   (EPHcmplx[:, MirrorFrom[i]-1, :, 360-p])
+    #ETHcmplx[:, MirrorInto_2[i] - 1, :, :].imag *= -1
+    #EPHcmplx[:, MirrorInto_2[i] - 1, :, :].imag *= -1
 
 for step in range (num_of_frequencies):     # Loop by frequencies
 
@@ -566,7 +570,7 @@ for step in range (len(frequency_list)):
 
     # *** Figure of self radiation resistances (at the matrix main diagonal) ***
     for i in range (ArrayInputNum):
-        data[i] = np.absolute(RSigm[step, i, i])
+        data[i] = np.real(RSigm[step, i, i])
     plt.figure()
     plt.scatter(x_values, data[:], color = 'C4', label = r'$R_{\Sigma}$')
     plt.xlabel('Number of dipole')
@@ -605,17 +609,35 @@ for step in range (len(frequency_list)):
 
 
 
-# *** Figure of radiation resistance absolute value matrix nondiagonal map ***
+# *** Figure of radiation impedance real part matrix nondiagonal map ***
 for step in range (len(frequency_list)):
-    data = np.absolute(RSigm[step, :, :])
+    data = np.zeros((ArrayInputNum, ArrayInputNum), dtype=np.float)
+    data[:,:] = np.real(RSigm[step, :, :])
     for i in range (ArrayInputNum):
         data[i, i] = 0
 
     figure_color_map(data, 'Number of dipole','Number of dipole',
                        'Matrix of mutual radiation resistances of dipoles in antenna array at %5.2f MHz'% frequency_list[step],
                        'NEC4 modeling results, self values set to zeros to show mutual pattern',
-                       result_path + "/Radiation resistance matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step])
+                       result_path + "/Radiation impedance matrix nondiagonal (Re) f = %5.2f MHz.png" % frequency_list[step])
 
+
+
+# *** Figure of radiation impedance imaginary part matrix nondiagonal map ***
+for step in range (len(frequency_list)):
+    data = np.zeros((ArrayInputNum, ArrayInputNum), dtype=np.float)
+    data[:,:] = np.imag(RSigm[step, :, :])
+    for i in range (ArrayInputNum):
+        data[i, i] = 0
+
+    figure_color_map(data, 'Number of dipole','Number of dipole',
+                       'Matrix of mutual radiation reactance of dipoles in antenna array at %5.2f MHz'% frequency_list[step],
+                       'NEC4 modeling results, self values set to zeros to show mutual pattern',
+                       result_path + "/Radiation impedance matrix nondiagonal (Im) f = %5.2f MHz.png" % frequency_list[step])
+
+
+
+# Calculate number od central dipole (or the nearest to phase center)
 central = int(ArrayInputNum / 2) + 1
 
 # Frequency dependence of input impedance of the first dipole and the central one
@@ -635,6 +657,8 @@ plt.grid(b = True, which = 'both', color = 'silver', linestyle = '-')
 plt.legend(loc = 'upper left', fontsize = 6)
 pylab.savefig(result_path + "/Self full impedances of first dipole.png", bbox_inches='tight', dpi = 180)
 plt.close('all')
+
+
 
 # Frequency dependence of current of the first dipole and the central one
 plt.figure()
