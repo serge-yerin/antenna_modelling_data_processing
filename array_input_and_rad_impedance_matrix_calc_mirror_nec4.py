@@ -236,7 +236,7 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
         # !!  Reading of E values in radiation patterns  !!
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        line = find_line_in_text_file (data_file, '- - - RADIATION PATTERNS - - -', 48)
+        line = find_line_in_text_file(data_file, '- - - RADIATION PATTERNS - - -', 48)
         line = data_file.readline()
         DistanceRP[file_num, step] = float(line[60 : 74])
         #print ('\n  Distance of RP calculations = ', DistanceRP[file_num, step], ' m. \n')
@@ -245,7 +245,7 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
 
         # *** loop by lines to read e-field amplitudes and phases for all theta and phi ***
 
-        for k in range (65341):  # 65341 = 181 * 361 degrees
+        for k in range(65341):  # 65341 = 181 * 361 degrees
             line = data_file.readline()
             theta1 = float(line[0: 8])
             phi1 = float(line[9: 17])
@@ -281,7 +281,7 @@ for step in range (num_of_frequencies):     # Loop by frequencies
 
     for i in range(len(mirror_into)):
         for j in range(array_input_num):
-            IFedDip[step, mirror_into[i]-1, j] = (IFedDip[step, mirror_from[i]-1, array_input_num-1-j]) # !!!  array_input_num+1
+            IFedDip[step, mirror_into[i]-1, j] = (IFedDip[step, mirror_from[i]-1, array_input_num-1-j])  # array_input_num+1
 
     # *** Calculations of Impedance matrices ***
 
@@ -289,7 +289,7 @@ for step in range (num_of_frequencies):     # Loop by frequencies
         for k in range(array_input_num):    # Loop by dipoles
             if k != (no_of_dip[i]-1):
                 Zinp[step, no_of_dip[i]-1, k] = - (IFedDip[step, no_of_dip[i]-1, k] * loads_values[i] /
-                                                   IFedDip[step, no_of_dip[i]-1, no_of_dip[i]-1]) # !!!-!!!
+                                                   IFedDip[step, no_of_dip[i]-1, no_of_dip[i]-1])  # !!!-!!!
 
     # Mirroring the Impedances for dipoles that were not excited
 
