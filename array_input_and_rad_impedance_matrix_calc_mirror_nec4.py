@@ -114,12 +114,15 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
 
     # *** Configuring the name of NEC output file ***
 
-    if file_num < 9:
-        no = '0' + str(no_of_dip[file_num])
-    else:
-        no = str(no_of_dip[file_num])
+    # if file_num < 9:
+    #     no = '0' + str(no_of_dip[file_num])
+    # else:
+    #     no = str(no_of_dip[file_num])
 
-    file_name = path_to_data + 'UTR2_6x5-' + no + '.out'
+    no = str(no_of_dip[file_num])
+
+    # file_name = path_to_data + 'UTR2_6x5-' + no + '.out'
+    file_name = path_to_data + 'UTR2_SEG=1018_6x5_Ex' + no + '.out'  # UTR2_SEG=1018_6x5_Ex1
     # file_name = path_to_data + 'UTR2_6x5-' + str(file_num + 1) + '.out'
     # file_name = path_to_data + 'UTR2_6x1_EX=' + str(file_num + 1) + '.out'
     # file_name = path_to_data + 'GURT-V325_25x01_Nex=' + no + '.out.txt'
