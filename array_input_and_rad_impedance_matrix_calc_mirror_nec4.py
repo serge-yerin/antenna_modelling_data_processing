@@ -2,31 +2,35 @@
 Software_version = '2021.02.03'
 Software_name = 'Array Input and Radiation Impedance Matrix Calculator for NEC4 results'
 
-#             array_input_and_rad_impedance_matrix_calc
-#    ***  Antenna Array Input and Radiation Impedance Matrices Calculator   ***
-# Program reads the result files of NEC modeling (.nec) where each (of non mirrored) dipole
-# of the antenna array is excited one by one (in each file), finds frequencies of analysis,
-# excitation sources, loads and their values, currents in sources and loads, antenna patterns.
-# Then the program calculates mutual impedances, radiation resistances, and store them to
-# text files (.txt).
+"""
+            array_input_and_rad_impedance_matrix_calc
+   ***  Antenna Array Input and Radiation Impedance Matrices Calculator   ***
+Program reads the result files of NEC modeling (.nec) where each (of non mirrored) dipole
+of the antenna array is excited one by one (in each file), finds frequencies of analysis,
+excitation sources, loads and their values, currents in sources and loads, antenna patterns.
+Then the program calculates mutual impedances, radiation resistances, and store them to
+text files (.txt).
 
-# The initial version was created for AA of 25 GURT dipoles of 1 polarization of
-# incoming waves, number of segments per dipole is 325 (Multi frequencies) then it was
-# extended for other possibilities, but still you need to analyze carefully the results
-
+The initial version was created for AA of 25 GURT dipoles of 1 polarization of
+incoming waves, number of segments per dipole is 325 (Multi frequencies) then it was
+extended for other possibilities, but still you need to analyze carefully the results
+* no_of_wires_per_dipole
+    98 for UTR-2 6x5 array 574 segments
+    182  for UTR-2 6x5 array 1018 segments
+"""
 
 # *************************************************************
 #                         PARAMETERS                          *
 # *************************************************************
 path_to_data = 'DATA/'
 
-no_of_wires_per_dipole = 98     # Number of wires per dipole (not segments!) needed to find loads  # 434 
-array_input_num = 30           # Array inputs number (total number of dipoles in array or inputs of dipoles)
-num_of_freq = 30            # Maximal possible number of frequencies analyzed
+no_of_wires_per_dipole = 182      # Number of wires per dipole (not segments!) needed to find loads  # 434
+array_input_num = 30              # Array inputs number (total number of dipoles in array or inputs of dipoles)
+num_of_freq = 25                  # Maximal possible number of frequencies analyzed
 print_or_not = 1
 
 # Rectangular UTR-2 antenna array of 6 * 5 = 30 dipoles
-no_of_dip = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 19, 20, 21, 25, 26]        # dipoles being excited
+no_of_dip = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 19, 20, 21, 25, 26]  # dipoles being excited
 mirror_from = [ 1,  2,  3,  4,  7,  8,  9, 13, 14, 19]	       # Active dipoles under the diagonal
 mirror_into = [30, 29, 28, 27, 24, 23, 22, 18, 17, 12]         # Passive dipoles above the diagonal
 
@@ -37,13 +41,13 @@ mirror_into = [30, 29, 28, 27, 24, 23, 22, 18, 17, 12]         # Passive dipoles
 
 # Square antenna array 5 * 5 = 25 dipoles
 # no_of_dip =    [1,  2,  3,  4,  5,  6,  7,  8,  9, 11, 12, 13, 16, 17, 21]  # 15 dipoles being excited
-# mirror_from = [1,  2,  3,  4,  6,  7,  8,  11, 12, 16]	                    # Active dipoles under the diagonal
-# mirror_into = [25, 24, 23, 22, 20, 19, 18, 15, 14, 10]                     # Passive dipoles above the diagonal
+# mirror_from = [1,  2,  3,  4,  6,  7,  8,  11, 12, 16]	                  # Active dipoles under the diagonal
+# mirror_into = [25, 24, 23, 22, 20, 19, 18, 15, 14, 10]                      # Passive dipoles above the diagonal
 
 # Linear antenna array 1 * 25 dipoles
-# no_of_dip =    [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13]     # Dipols being excited (numbers in NEC out files names)
-# mirror_from = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12]	        # Active dipoles under the diagonal
-# mirror_into = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14]         # Passive dipoles above the diagonal
+# no_of_dip =    [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13]  # Dipols being excited (numbers in NEC out files names)
+# mirror_from = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12]	   # Active dipoles under the diagonal
+# mirror_into = [25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14]       # Passive dipoles above the diagonal
 
 pi = 3.141593
 # *************************************************************
@@ -83,7 +87,7 @@ print('    ---------------------------------------------------------------------
 start_time = time.time()
 current_time = time.strftime("%H:%M:%S")
 current_date = time.strftime("%d.%m.%Y")
-print ('  Today is ', current_date, ' time is ', current_time, '\n\n')
+print('  Today is ', current_date, ' time is ', current_time, '\n\n')
 
 nec_file_num = len(no_of_dip)    # The number of NEC out files
 
@@ -181,7 +185,7 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
 
     data_file.seek(0)  # return to the beginning of the file
 
-    for step in range (num_of_frequencies):
+    for step in range(num_of_frequencies):
         # Seek for current frequency
         line = find_line_in_text_file (data_file, 'FREQUENCY=', 36)
         words_in_line = line.split()
@@ -202,8 +206,10 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
 
         # print ('\n\n   For frequency = ', frequency_list[step], ' MHz')
         # print ('  ---------------------------- \n')
-        # print ('  Self full impedance of the dipole = ', Rinp[step, no_of_dip[file_num]-1, no_of_dip[file_num]-1], Xinp[step, no_of_dip[file_num]-1, no_of_dip[file_num]-1], ' Ohm' )
-        # print ('  Current in fed point of active dipole = ', IFedDipReal[step, no_of_dip[file_num]-1, no_of_dip[file_num]-1],  IFedDipImag[step, no_of_dip[file_num]-1, no_of_dip[file_num]-1],' Amp. \n')
+        # print ('  Self full impedance of the dipole = ', Rinp[step, no_of_dip[file_num]-1,
+        # no_of_dip[file_num]-1], Xinp[step, no_of_dip[file_num]-1, no_of_dip[file_num]-1], ' Ohm' )
+        # print ('  Current in fed point of active dipole = ', IFedDipReal[step, no_of_dip[file_num]-1,
+        # no_of_dip[file_num]-1],  IFedDipImag[step, no_of_dip[file_num]-1, no_of_dip[file_num]-1],' Amp. \n')
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # !! Searching and reading the current in impedance load !!
@@ -219,7 +225,7 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
             while intTemp < wires_with_loads[j]:   # !=
                 line = data_file.readline()
                 intTemp = int(line[6:12])
-            if segments_with_loads[j] < 1:  # if the number of segment = 1 we return to the begining of the line
+            if segments_with_loads[j] < 1:  # if the number of segment = 1 we return to the beginning of the line
                 sys.exit('ERROR!')
             if segments_with_loads[j] > 1:  # if the number of segment > 2 we skip lines
                 for i in range (segments_with_loads[j] - 1): line = data_file.readline()   # Skip several lines
@@ -241,10 +247,11 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
 
         line = find_line_in_text_file(data_file, '- - - RADIATION PATTERNS - - -', 48)
         line = data_file.readline()
-        DistanceRP[file_num, step] = float(line[60 : 74])
-        #print ('\n  Distance of RP calculations = ', DistanceRP[file_num, step], ' m. \n')
+        DistanceRP[file_num, step] = float(line[60:74])
+        # print ('\n  Distance of RP calculations = ', DistanceRP[file_num, step], ' m. \n')
 
-        for i in range (7): line = data_file.readline()   # Skip several lines of table header
+        for i in range(7):
+            line = data_file.readline()   # Skip several lines of table header
 
         # *** loop by lines to read e-field amplitudes and phases for all theta and phi ***
 
@@ -284,7 +291,7 @@ for step in range (num_of_frequencies):     # Loop by frequencies
 
     for i in range(len(mirror_into)):
         for j in range(array_input_num):
-            IFedDip[step, mirror_into[i]-1, j] = (IFedDip[step, mirror_from[i]-1, array_input_num-1-j])  # array_input_num+1
+            IFedDip[step, mirror_into[i]-1, j] = IFedDip[step, mirror_from[i]-1, array_input_num-1-j] 
 
     # *** Calculations of Impedance matrices ***
 
@@ -304,7 +311,7 @@ for step in range (num_of_frequencies):     # Loop by frequencies
     # !!  Mirroring of RP for noncalculated dipoles  !!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    for i in range(len(mirror_into)):   # loop by dipoles
+    for i in range(len(mirror_into)):  # loop by dipoles
         for t in range(181):           # loop by theta
             for p in range(180):       # loop by phi
                 ETHcmplx[step, mirror_into[i]-1, t, p+180] = - ETHcmplx[step, mirror_from[i]-1, t, p]
@@ -317,8 +324,8 @@ for step in range (num_of_frequencies):     # Loop by frequencies
     # !!         Integrals calculation              !!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    for i in range(array_input_num):       # Loop by first dipole
-        for j in range(array_input_num):   # Loop by second dipole
+    for i in range(array_input_num):       # Loop by the first dipole
+        for j in range(array_input_num):   # Loop by the second dipole
             if i >= j:
 
                 # Forming the integration elements for Theta angle
@@ -366,7 +373,7 @@ for step in range (num_of_frequencies):     # Loop by frequencies
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-for step in range (num_of_frequencies):	 # Loop by frequencies for displaying results on the screen
+for step in range(num_of_frequencies):	 # Loop by frequencies for displaying results on the screen
 
     print('\n\n  For frequency = ', frequency_list[step], ' MHz')
     print('  --------------------------')
@@ -409,7 +416,6 @@ for step in range(num_of_frequencies):	 # Loop by frequencies for results files 
         data = ['   {:+14.8e}   {:+14.8e}'.format(np.real(Zinp[step, k, i]), np.imag(Zinp[step, k, i])) for i in range(array_input_num)]
         ImpedanceMatrixFile.write(' {:2d}'.format(k+1) + ''.join(data)+ '   \n')
 
-
     # *** Writing radiation resistances to file ***
     RadImpMatrixFile.write('\n\n    *** Matrix of radiation resistances of dipoles f = %6.3f MHz ***  \n\n' % frequency_list[step])
     data = ['                                  {:2d}'.format(i+2) for i in range(array_input_num-1)]
@@ -419,8 +425,6 @@ for step in range(num_of_frequencies):	 # Loop by frequencies for results files 
     for k in range(array_input_num):
         data = ['   {:+14.8e}   {:+14.8e}'.format(np.real(RSigm[step, k, i]), np.imag(RSigm[step, k, i])) for i in range(array_input_num)]
         RadImpMatrixFile.write(' {:2d}'.format(k+1) + ''.join(data)+ '   \n')
-
-
 
     # *** Writing currents on dipols inputs to files for MatCAD
     file_name = (result_path + '/Currents on dipols inputs f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
@@ -433,7 +437,6 @@ for step in range(num_of_frequencies):	 # Loop by frequencies for results files 
         CurrentFile.write(' ' + ''.join(data)+ '  \n')
     CurrentFile.close()
 
-
     # *** Writing normalized currents on dipols inputs to files for MatCAD ***
     file_name = (result_path + '/Normalized Currents on dipols inputs f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
     CurrentFile = open(file_name, "w")  # 6
@@ -445,16 +448,15 @@ for step in range(num_of_frequencies):	 # Loop by frequencies for results files 
         CurrentFile.write(' ' + ''.join(data)+ '  \n')
     CurrentFile.close()
 
-
     # *** Writing impedances of dipols to files for MatCAD ***
     file_name = (result_path + '/Impedances of dipols f = %5.2f MHz for MatCAD.txt' % frequency_list[step])
     CurrentFile = open(file_name, "w")  # 6
     for k in range(array_input_num):
         data = ['   {:+14.8e}'.format(np.real(Zinp[step, i, k])) for i in range(array_input_num)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        CurrentFile.write(' ' + ''.join(data) + '  \n')
     for k in range(array_input_num):
         data = ['   {:+14.8e}'.format(np.imag(Zinp[step, i, k])) for i in range(array_input_num)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        CurrentFile.write(' ' + ''.join(data) + '  \n')
     CurrentFile.close()
 
 
@@ -463,10 +465,10 @@ for step in range(num_of_frequencies):	 # Loop by frequencies for results files 
     CurrentFile = open(file_name, "w")  # 6
     for k in range(array_input_num):
         data = ['   {:+14.8e}'.format(np.real(RSigm[step, i, k])) for i in range(array_input_num)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        CurrentFile.write(' ' + ''.join(data) + '  \n')
     for k in range(array_input_num):
         data = ['   {:+14.8e}'.format(np.imag(RSigm[step, i, k])) for i in range(array_input_num)]
-        CurrentFile.write(' ' + ''.join(data)+ '  \n')
+        CurrentFile.write(' ' + ''.join(data) + '  \n')
     CurrentFile.close()
 
     # *** Writing radiation efficiencies of dipols to files for MatCAD ***
@@ -483,11 +485,11 @@ for step in range(num_of_frequencies):	 # Loop by frequencies for results files 
     for k in range(array_input_num):
         for t in range(91):
             data = [' {:+14.8e}'.format(np.real(ETHcmplx[step, k, t+90, p] / IFedDip[step, k, k])) for p in range(361)]
-            CurrentFile.write('' + ''.join(data)+ ' \n')
+            CurrentFile.write('' + ''.join(data) + ' \n')
     for k in range(array_input_num):
         for t in range(91):
             data = [' {:+14.8e}'.format(np.imag(ETHcmplx[step, k, t+90, p] / IFedDip[step, k, k])) for p in range(361)]
-            CurrentFile.write('' + ''.join(data)+ ' \n')
+            CurrentFile.write('' + ''.join(data) + ' \n')
     CurrentFile.close()
 
     # *** Writing normalized Ephi RP to files for MatCAD ***
@@ -496,7 +498,7 @@ for step in range(num_of_frequencies):	 # Loop by frequencies for results files 
     for k in range(array_input_num):
         for t in range(91):
             data = [' {:+14.8e}'.format(np.real(EPHcmplx[step, k, t+90, p] / IFedDip[step, k, k])) for p in range(361)]
-            CurrentFile.write('' + ''.join(data)+ ' \n')
+            CurrentFile.write('' + ''.join(data) + ' \n')
     for k in range(array_input_num):
         for t in range(91):
             data = [' {:+14.8e}'.format(np.imag(EPHcmplx[step, k, t+90, p] / IFedDip[step, k, k])) for p in range(361)]
@@ -516,7 +518,7 @@ for step in range(len(frequency_list)):
     data = np.zeros((array_input_num))
     for i in range(array_input_num):
         data[i] = np.absolute(IFedDip[step, i, i])
-    x_values = np.linspace(1, array_input_num, num = array_input_num)
+    x_values = np.linspace(1, array_input_num, num=array_input_num)
     plt.figure()
     rc('font', weight='normal')
     plt.plot(x_values, data[:], 'bo', label='Abs(IFedDip)')
@@ -524,11 +526,10 @@ for step in range(len(frequency_list)):
     plt.ylabel('Current at dipole output, A')
     # plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
     plt.title('NEC modeling results, self currents - absolute values', fontsize=10)
-    # plt.grid(b = True, which = 'both', color = '0.00',linestyle = '--')
     plt.grid(b=True, which='both', color='silver', linestyle='-')
     plt.legend(loc='lower center', fontsize=10)
-    pylab.savefig(result_path + "/Dipole currents (abs) f = %5.2f MHz.png" % frequency_list[step], bbox_inches='tight', dpi = 160)
-    # plt.show()
+    pylab.savefig(result_path + "/Dipole currents (abs) f = %5.2f MHz.png" % frequency_list[step],
+                  bbox_inches='tight', dpi=160)
     plt.close('all')
 
 
@@ -539,7 +540,7 @@ for step in range(len(frequency_list)):
         data[i, i] = 0
 
     figure_color_map(data, 'Number of dipole','Number of dipole',
-                     'Matrix of currents at inputs of antenna array at %5.2f MHz'% frequency_list[step],
+                     'Matrix of currents at inputs of antenna array at %5.2f MHz' % frequency_list[step],
                      'NEC modeling results',
                      result_path + "/Dipole currents matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step])
 
@@ -552,15 +553,14 @@ for step in range(len(frequency_list)):
     x_values = np.linspace(1, array_input_num, num=array_input_num)
     plt.figure()
     rc('font', weight='normal')
-    # plt.plot(x_values, data[:], color = 'violet', linestyle = '-', linewidth = '1.00', label = 'Abs(Zinp)')
-    plt.bar(x_values, data[:], bottom = np.min(data[:]) * 0.99)
+    plt.bar(x_values, data[:], bottom=np.min(data[:]) * 0.99)
     plt.xlabel('Number of dipole')
     plt.ylabel('|Z|, Ohm')
-    # plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
     plt.title('NEC modeling results', fontsize=7, x=0.46, y=1.005)
-    plt.grid(b=True, which='both', color='0.00',linestyle='--')
+    plt.grid(b=True, which='both', color='0.00', linestyle='--')
     # plt.legend(loc = 'lower center', fontsize = 10)
-    pylab.savefig(result_path + "/Self full impedances (abs) f = %5.2f MHz.png" % frequency_list[step], bbox_inches='tight', dpi = 160)
+    pylab.savefig(result_path + "/Self full impedances (abs) f = %5.2f MHz.png" % frequency_list[step],
+                  bbox_inches='tight', dpi=160)
     plt.close('all')
 
 
@@ -570,10 +570,10 @@ for step in range(len(frequency_list)):
     for i in range(array_input_num):
         data[i, i] = 0
 
-    figure_color_map(data, 'Number of dipole','Number of dipole',
-                       'Matrix of impedances at inputs of antenna array at %5.2f MHz'% frequency_list[step],
-                       'NEC modeling results, self values set to zeros to show mutual pattern',
-                       result_path + "/Dipole impedances matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step])
+    figure_color_map(data, 'Number of dipole', 'Number of dipole',
+                     'Matrix of impedances at inputs of antenna array at %5.2f MHz' % frequency_list[step],
+                     'NEC modeling results, self values set to zeros to show mutual pattern',
+                     result_path + "/Dipole impedances matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step])
 
 
 # *** Figure of radiation resistance absolute value matrix nondiagonal map ***
@@ -582,8 +582,8 @@ for step in range(len(frequency_list)):
     for i in range(array_input_num):
         data[i, i] = 0
 
-    figure_color_map(data, 'Number of dipole','Number of dipole',
-                     'Matrix of mutual radiation resistances of dipoles in antenna array at %5.2f MHz'% frequency_list[step],
+    figure_color_map(data, 'Number of dipole', 'Number of dipole',
+                     'Matrix of mutual radiation resistances of dipoles in antenna array at %5.2f MHz' % frequency_list[step],
                      'NEC modeling results, self values set to zeros to show mutual pattern',
                      result_path + "/Radiation resistance matrix nondiagonal (abs) f = %5.2f MHz.png" % frequency_list[step])
 
@@ -599,36 +599,34 @@ plt.plot(frequency_list[1: len(frequency_list)], np.imag(Zinp[0: len(frequency_l
 plt.plot(frequency_list[1: len(frequency_list)], np.absolute(Zinp[0: len(frequency_list)-1, 0, 0]),
          color='C4', linestyle='-', linewidth='1.00', label='Abs(Zinp) dipole # 1')
 plt.plot(frequency_list[1: len(frequency_list)], np.real(Zinp[0: len(frequency_list)-1, central, central]),
-         color='C0', linestyle='--', linewidth='1.00', label='Re(Zinp) central dipole')
+         color='C0', linestyle='--', linewidth='1.00', label='Re(Zinp) central dipole # ' + str(central))
 plt.plot(frequency_list[1: len(frequency_list)], np.imag(Zinp[0: len(frequency_list)-1, central, central]),
-         color='C1', linestyle='--', linewidth='1.00', label='Im(Zinp) central dipole')
+         color='C1', linestyle='--', linewidth='1.00', label='Im(Zinp) central dipole # ' + str(central))
 plt.plot(frequency_list[1: len(frequency_list)], np.absolute(Zinp[0: len(frequency_list)-1, central, central]),
-         color='C4', linestyle='--', linewidth='1.00', label='Abs(Zinp) central dipole')
+         color='C4', linestyle='--', linewidth='1.00', label='Abs(Zinp) central dipole # ' + str(central))
 plt.xlabel('Frequency, MHz')
 plt.ylabel('R, X, |Z|, Ohm')
 # plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
 plt.title('NEC modeling results', fontsize=7, x=0.46, y=1.005)
-plt.grid(b = True, which='both', color='silver', linestyle='-')
+plt.grid(b=True, which='both', color='silver', linestyle='-')
 plt.legend(loc='lower center', fontsize=8)
-pylab.savefig(result_path + "/Self full impedances of first dipole.png", bbox_inches='tight', dpi = 160)
-# plt.show()
+pylab.savefig(result_path + "/Self full impedances of the first dipole.png", bbox_inches='tight', dpi=160)
 plt.close('all')
 
 # Frequency dependence of radiation resistance of the first dipole and the central one
 plt.figure()
 rc('font', weight='normal')
-plt.plot(frequency_list[1 : len(frequency_list)], np.real(RSigm[0: len(frequency_list)-1, 0, 0]),
+plt.plot(frequency_list[1: len(frequency_list)], np.real(RSigm[0: len(frequency_list)-1, 0, 0]),
          color='C0', linestyle='-', linewidth='1.00', label='Rsigm dipole # 1')
-plt.plot(frequency_list[1 : len(frequency_list)], np.real(RSigm[0: len(frequency_list)-1, central, central]),
-         color='C1', linestyle='-', linewidth='1.00', label='Rsigm central dipole')
+plt.plot(frequency_list[1: len(frequency_list)], np.real(RSigm[0: len(frequency_list)-1, central, central]),
+         color='C1', linestyle='-', linewidth='1.00', label='Rsigm central dipole # ' + str(central))
 plt.xlabel('Frequency, MHz')
 plt.ylabel('Rsigm, Ohm')
 # plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
 plt.title('NEC modeling results', fontsize=7, x=0.46, y=1.005)
 plt.grid(b=True, which='both', color='silver', linestyle='-')
 plt.legend(loc='lower center', fontsize=8)
-pylab.savefig(result_path + "/Self radiation resistances of first dipole.png", bbox_inches='tight', dpi=160)
-# plt.show()
+pylab.savefig(result_path + "/Self radiation resistances of the first dipole.png", bbox_inches='tight', dpi=160)
 plt.close('all')
 
 # Frequency dependence of radiation efficiency of the first dipole and the central one
@@ -637,7 +635,7 @@ rc('font', weight='normal')
 plt.plot(frequency_list[1:], Efficiency[0: len(frequency_list)-1, 0],
          color='C0', linestyle='-', linewidth='1.00', label='Efficiency dipole # 1')
 plt.plot(frequency_list[1:], Efficiency[0: len(frequency_list)-1, central],
-         color='C1', linestyle='-', linewidth='1.00', label='Efficiency central dipole')
+         color='C1', linestyle='-', linewidth='1.00', label='Efficiency of central dipole # ' + str(central))
 plt.xlabel('Frequency, MHz')
 plt.ylabel('Efficiency, %')
 # plt.suptitle(SupTitle, fontsize=10, fontweight='bold')
@@ -645,11 +643,10 @@ plt.title('NEC modeling results', fontsize=7, x=0.46, y=1.005)
 plt.grid(b=True, which='both', color='silver', linestyle='-')
 plt.legend(loc='lower center', fontsize=8)
 pylab.savefig(result_path + "/Self radiation efficiency.png", bbox_inches='tight', dpi=160)
-# plt.show()
 plt.close('all')
 
 
 finish_time = time.time()
 print('\n\n  The program execution lasted for ', round((finish_time - start_time), 2), 'seconds (',
-                round((finish_time - start_time)/60, 2), 'min. ) \n')
+      round((finish_time - start_time)/60, 2), 'min. ) \n')
 print('\n      *** Program ' + Software_name + ' has finished! *** \n\n\n')
