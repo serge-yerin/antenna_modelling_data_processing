@@ -267,9 +267,9 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
             thetaInt = (int(theta1)) + 90
             phiInt = int(phi1)
             ETHcmplx[step, no_of_dip[file_num]-1, thetaInt, phiInt] = \
-                np.complex((Etheta * np.cos(ang1 * pi/180)), (Etheta * np.sin((ang1 * pi/180))))
+                complex((Etheta * np.cos(ang1 * pi/180)), (Etheta * np.sin((ang1 * pi/180))))
             EPHcmplx[step, no_of_dip[file_num]-1, thetaInt, phiInt] = \
-                np.complex((Ephi * np.cos(ang2 * pi/180)), (Ephi * np.sin((ang2 * pi/180))))
+                complex((Ephi * np.cos(ang2 * pi/180)), (Ephi * np.sin((ang2 * pi/180))))
 
     data_file.close()
 
