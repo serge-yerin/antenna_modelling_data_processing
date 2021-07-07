@@ -22,9 +22,9 @@ Software_name = 'Array Input Impedance Matrix Calculator NEC4'
 #                            P A R A M E T E R S                                *
 # *******************************************************************************
 path_to_data = 'DATA/'
-file_name = 'UTR2_6x1_EX=3.out'
+file_name = 'UTR2_6x9_i=25.out'
 num_of_freq = 51            # Maximal possible number of frequencies analyzed
-max_loads_num = 50          # Maximal number of loads in the file
+max_loads_num = 54          # Maximal number of loads in the file
 print_or_not = 1            # 1 - print additional info, 0 - do not print
 # *******************************************************************************
 #                      I M P O R T   L I B R A R I E S                          *
@@ -130,15 +130,15 @@ for FileNum in range (TotFileNum):
 
     for step in range(num_of_frequencies):
         # Seek for frequencies of analyses one by one
-        line = find_line_in_text_file(Data_File, 'FREQUENCY=', 36, line)
+        line = find_line_in_text_file(Data_File, 'FREQUENCY=', 36)  # , line
         words_in_line = line.split()
         frequency_list.append(float(words_in_line[1]))
 
         # *** Searching antenna input parameters block at the frequency ***
-        line = find_line_in_text_file (Data_File, '- - - ANTENNA INPUT PARAMETERS - - -', 42, line)
+        line = find_line_in_text_file (Data_File, '- - - ANTENNA INPUT PARAMETERS - - -', 42) #, line
 
         # *** Searching and reading the self impedance and initial current at the frequency ***
-        line = find_line_in_text_file (Data_File, 'IMPEDANCE', 64, line)
+        line = find_line_in_text_file (Data_File, 'IMPEDANCE', 64)  #, line
 
         line = Data_File.readline()   # Skip one line
         line = Data_File.readline()
@@ -165,7 +165,7 @@ for FileNum in range (TotFileNum):
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # Seek for currents in loads
-        line = find_line_in_text_file (Data_File, '- - - CURRENTS AND LOCATION - - -', 29, line)
+        line = find_line_in_text_file (Data_File, '- - - CURRENTS AND LOCATION - - -', 29)  # , line
         for i in range(6):
             line = Data_File.readline()   # Skip several lines
 
