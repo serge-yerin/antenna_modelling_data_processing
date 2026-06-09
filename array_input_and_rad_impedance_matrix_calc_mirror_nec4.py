@@ -23,16 +23,27 @@ extended for other possibilities, but still you need to analyze carefully the re
 #                         PARAMETERS                          *
 # *************************************************************
 path_to_data = 'DATA/'
+MIRRORING = False # Mirroring of currents and impedances for non-excited dipoles (if True, the program will mirror the currents and impedances for non-excited dipoles, if False, the program will not mirror the currents and impedances for non-excited dipoles)
 
-no_of_wires_per_dipole = 182      # Number of wires per dipole (not segments!) needed to find loads  # 434
-array_input_num = 30              # Array inputs number (total number of dipoles in array or inputs of dipoles)
-num_of_freq = 25                  # Maximal possible number of frequencies analyzed
+# T-shaped GURT antenna subarray of 6 * 5 = __ dipoles
+no_of_wires_per_dipole = 45      # Number of wires per dipole (not segments!) needed to find loads  # 434
+array_input_num = 10              # Array inputs number (total number of dipoles in array or inputs of dipoles)
+num_of_freq = 80                  # Maximal possible number of frequencies analyzed
 print_or_not = 1
 
-# Rectangular UTR-2 antenna array of 6 * 5 = 30 dipoles
-no_of_dip = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 19, 20, 21, 25, 26]  # dipoles being excited
-mirror_from = [ 1,  2,  3,  4,  7,  8,  9, 13, 14, 19]	       # Active dipoles under the diagonal
-mirror_into = [30, 29, 28, 27, 24, 23, 22, 18, 17, 12]         # Passive dipoles above the diagonal
+no_of_dip = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # dipoles being excited
+mirror_from = []	      
+mirror_into = []         
+
+# # Rectangular UTR-2 antenna array of 6 * 5 = 30 dipoles
+# no_of_wires_per_dipole = 182      # Number of wires per dipole (not segments!) needed to find loads  # 434
+# array_input_num = 30              # Array inputs number (total number of dipoles in array or inputs of dipoles)
+# num_of_freq = 25                  # Maximal possible number of frequencies analyzed
+# print_or_not = 1
+
+# no_of_dip = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 19, 20, 21, 25, 26]  # dipoles being excited
+# mirror_from = [ 1,  2,  3,  4,  7,  8,  9, 13, 14, 19]	       # Active dipoles under the diagonal
+# mirror_into = [30, 29, 28, 27, 24, 23, 22, 18, 17, 12]         # Passive dipoles above the diagonal
 
 # Linear antenna array 1 * 6 = 6 dipoles
 # no_of_dip = [1,  2,  3]          # 3 dipoles being excited
@@ -118,15 +129,16 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
 
     # *** Configuring the name of NEC output file ***
 
-    # if file_num < 9:
-    #     no = '0' + str(no_of_dip[file_num])
-    # else:
-    #     no = str(no_of_dip[file_num])
+    if file_num < 9:
+        no = '0' + str(no_of_dip[file_num])
+    else:
+        no = str(no_of_dip[file_num])
 
-    no = str(no_of_dip[file_num])
+    # no = str(no_of_dip[file_num])
 
+    file_name = path_to_data + 'GURT_T_N=10_E=' + no + '.out'  # GURT GURT_T_N=10_E=01.out
     # file_name = path_to_data + 'UTR2_6x5-' + no + '.out'
-    file_name = path_to_data + 'UTR2_SEG=1018_6x5_Ex' + no + '.out'  # UTR2_SEG=1018_6x5_Ex1
+    # file_name = path_to_data + 'UTR2_SEG=1018_6x5_Ex' + no + '.out'  # UTR2_SEG=1018_6x5_Ex1
     # file_name = path_to_data + 'UTR2_6x5-' + str(file_num + 1) + '.out'
     # file_name = path_to_data + 'UTR2_6x1_EX=' + str(file_num + 1) + '.out'
     # file_name = path_to_data + 'GURT-V325_25x01_Nex=' + no + '.out.txt'
@@ -287,38 +299,39 @@ print ('\n\n\n    Calculations started at: ', time.strftime("%H:%M:%S"), '  \n\n
 
 for step in range (num_of_frequencies):     # Loop by frequencies
 
-    # *** Mirroring of currents for cases where dipoles were not excited ***
+    if MIRRORING:
+        # *** Mirroring of currents for cases where dipoles were not excited ***
 
-    for i in range(len(mirror_into)):
-        for j in range(array_input_num):
-            IFedDip[step, mirror_into[i]-1, j] = IFedDip[step, mirror_from[i]-1, array_input_num-1-j] 
+        for i in range(len(mirror_into)):
+            for j in range(array_input_num):
+                IFedDip[step, mirror_into[i]-1, j] = IFedDip[step, mirror_from[i]-1, array_input_num-1-j] 
 
-    # *** Calculations of Impedance matrices ***
+        # *** Calculations of Impedance matrices ***
 
-    for i in range(nec_file_num):           # Loop by files
-        for k in range(array_input_num):    # Loop by dipoles
-            if k != (no_of_dip[i]-1):
-                Zinp[step, no_of_dip[i]-1, k] = - (IFedDip[step, no_of_dip[i]-1, k] * loads_values[i] /
-                                                   IFedDip[step, no_of_dip[i]-1, no_of_dip[i]-1])  # !!!-!!!
+        for i in range(nec_file_num):           # Loop by files
+            for k in range(array_input_num):    # Loop by dipoles
+                if k != (no_of_dip[i]-1):
+                    Zinp[step, no_of_dip[i]-1, k] = - (IFedDip[step, no_of_dip[i]-1, k] * loads_values[i] /
+                                                    IFedDip[step, no_of_dip[i]-1, no_of_dip[i]-1])  # !!!-!!!
 
-    # Mirroring the Impedances for dipoles that were not excited
+        # Mirroring the Impedances for dipoles that were not excited
 
-    for i in range(len(mirror_into)):     # Loop by active dipoles below array diagonal
-        for j in range(array_input_num):         # Loop by dipoles
-            Zinp[step, mirror_into[i]-1, array_input_num - 1 - j] = Zinp[step, mirror_from[i]-1, j] 
+        for i in range(len(mirror_into)):     # Loop by active dipoles below array diagonal
+            for j in range(array_input_num):         # Loop by dipoles
+                Zinp[step, mirror_into[i]-1, array_input_num - 1 - j] = Zinp[step, mirror_from[i]-1, j] 
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!  Mirroring of RP for noncalculated dipoles  !!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # !!  Mirroring of RP for noncalculated dipoles  !!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    for i in range(len(mirror_into)):  # loop by dipoles
-        for t in range(181):           # loop by theta
-            for p in range(180):       # loop by phi
-                ETHcmplx[step, mirror_into[i]-1, t, p+180] = - ETHcmplx[step, mirror_from[i]-1, t, p]
-                EPHcmplx[step, mirror_into[i]-1, t, p+180] = - EPHcmplx[step, mirror_from[i]-1, t, p]
-            for p in range(180, 361):
-                ETHcmplx[step, mirror_into[i]-1, t, p-180] = - ETHcmplx[step, mirror_from[i]-1, t, p]
-                EPHcmplx[step, mirror_into[i]-1, t, p-180] = - EPHcmplx[step, mirror_from[i]-1, t, p]
+        for i in range(len(mirror_into)):  # loop by dipoles
+            for t in range(181):           # loop by theta
+                for p in range(180):       # loop by phi
+                    ETHcmplx[step, mirror_into[i]-1, t, p+180] = - ETHcmplx[step, mirror_from[i]-1, t, p]
+                    EPHcmplx[step, mirror_into[i]-1, t, p+180] = - EPHcmplx[step, mirror_from[i]-1, t, p]
+                for p in range(180, 361):
+                    ETHcmplx[step, mirror_into[i]-1, t, p-180] = - ETHcmplx[step, mirror_from[i]-1, t, p]
+                    EPHcmplx[step, mirror_into[i]-1, t, p-180] = - EPHcmplx[step, mirror_from[i]-1, t, p]
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # !!         Integrals calculation              !!
