@@ -1,5 +1,5 @@
 # Python3
-Software_version = '2021.02.03'
+Software_version = '2026.06.23'
 Software_name = 'Array Input and Radiation Impedance Matrix Calculator for NEC4 results'
 
 """
@@ -17,19 +17,27 @@ extended for other possibilities, but still you need to analyze carefully the re
 * no_of_wires_per_dipole
     98 for UTR-2 6x5 array 574 segments
     182  for UTR-2 6x5 array 1018 segments
+    45 for GURT T-shaped 10 dipoles array 325 segments
 """
 
 # *************************************************************
-#                         PARAMETERS                          *
+#                     GENERAL PARAMETERS                      *
 # *************************************************************
+# General parameters
 path_to_data = 'DATA/'
-MIRRORING = False # Mirroring of currents and impedances for non-excited dipoles (if True, the program will mirror the currents and impedances for non-excited dipoles, if False, the program will not mirror the currents and impedances for non-excited dipoles)
+MIRRORING = False                 # Mirroring of currents and impedances for non-excited dipoles (if True, the program will mirror the currents and impedances for non-excited dipoles, if False, the program will not mirror the currents and impedances for non-excited dipoles)
+LEADING_ZEROS_FILENAME = True     # Leading zeros in the NEC output file names (if True, the program will add leading zeros to the NEC output file names, if False, the program will not add leading zeros to the NEC output file names)
+print_or_not = 1
 
-# T-shaped GURT antenna subarray of 6 * 5 = __ dipoles
-no_of_wires_per_dipole = 45      # Number of wires per dipole (not segments!) needed to find loads  # 434
+# *************************************************************
+#               ARRAY CONFIGURATION PARAMETERS                *
+# *************************************************************
+
+
+# T-shaped GURT antenna subarray of 5 + 5 =  dipoles (inputs) each dipole of 45 wires
+no_of_wires_per_dipole = 45       # Number of wires per dipole (not segments!) needed to find loads  
 array_input_num = 10              # Array inputs number (total number of dipoles in array or inputs of dipoles)
 num_of_freq = 80                  # Maximal possible number of frequencies analyzed
-print_or_not = 1
 
 no_of_dip = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # dipoles being excited
 mirror_from = []	      
@@ -48,7 +56,7 @@ mirror_into = []
 # Linear antenna array 1 * 6 = 6 dipoles
 # no_of_dip = [1,  2,  3]          # 3 dipoles being excited
 # mirror_from = [1, 2, 3]	       # Active dipoles under the diagonal
-# mirror_into = [6, 5, 4]         # Passive dipoles above the diagonal
+# mirror_into = [6, 5, 4]          # Passive dipoles above the diagonal
 
 # Square antenna array 5 * 5 = 25 dipoles
 # no_of_dip =    [1,  2,  3,  4,  5,  6,  7,  8,  9, 11, 12, 13, 16, 17, 21]  # 15 dipoles being excited
@@ -102,6 +110,7 @@ print('  Today is ', current_date, ' time is ', current_time, '\n\n')
 
 nec_file_num = len(no_of_dip)    # The number of NEC out files
 
+Rload = np.full((array_input_num, array_input_num), 0.0)
 Rinp = np.full((num_of_freq, array_input_num, array_input_num), 0.0)
 Xinp = np.full((num_of_freq, array_input_num, array_input_num), 0.0)
 IFedDipReal = np.full((num_of_freq, array_input_num, array_input_num), 0.0)
@@ -129,12 +138,13 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
 
     # *** Configuring the name of NEC output file ***
 
-    if file_num < 9:
-        no = '0' + str(no_of_dip[file_num])
+    if LEADING_ZEROS_FILENAME:
+        if file_num < 9:
+            no = '0' + str(no_of_dip[file_num])
+        else:
+            no = str(no_of_dip[file_num])
     else:
         no = str(no_of_dip[file_num])
-
-    # no = str(no_of_dip[file_num])
 
     file_name = path_to_data + 'GURT_T_N=10_E=' + no + '.out'  # GURT GURT_T_N=10_E=01.out
     # file_name = path_to_data + 'UTR2_6x5-' + no + '.out'
@@ -173,6 +183,10 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
                 wires_with_loads.append(int(words_in_line[0]))
                 segments_with_loads.append(int(words_in_line[1]))
                 loads_values.append(float(words_in_line[3]))
+        
+                # Filling correct array of loads for the case when the load is connected to the dipole input (the first wire of the dipole)        
+                Rload[file_num, int((wires_with_loads[-1]) / no_of_wires_per_dipole)] = float(words_in_line[3])  # Assuming the load is connected to the dipole input (the first wire of the dipole)
+
         else:
             counter += 1
 
@@ -285,6 +299,9 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
 
     data_file.close()
 
+    # Loads values print for each file to be sure the loads are on correct places
+    print(Rload[file_num, :])
+
 IFedDip = IFedDipReal + 1j * IFedDipImag
 Zinp = Rinp + 1j * Xinp
 del IFedDipReal, IFedDipImag, Rinp, Xinp
@@ -296,23 +313,43 @@ del IFedDipReal, IFedDipImag, Rinp, Xinp
 
 print ('\n\n\n    Calculations started at: ', time.strftime("%H:%M:%S"), '  \n\n')
 
+if MIRRORING:
+    # *** Mirroring of load resistances for cases where dipoles were not excited ***
+
+    for i in range(len(mirror_into)):
+        for j in range(array_input_num):
+            Rload[ mirror_into[i]-1, j] = Rload[ mirror_from[i]-1, array_input_num-1-j] 
+
+
 
 for step in range (num_of_frequencies):     # Loop by frequencies
 
     if MIRRORING:
+        
         # *** Mirroring of currents for cases where dipoles were not excited ***
 
         for i in range(len(mirror_into)):
             for j in range(array_input_num):
                 IFedDip[step, mirror_into[i]-1, j] = IFedDip[step, mirror_from[i]-1, array_input_num-1-j] 
 
-        # *** Calculations of Impedance matrices ***
+    # *** Calculations of Impedance matrices ***
 
-        for i in range(nec_file_num):           # Loop by files
-            for k in range(array_input_num):    # Loop by dipoles
-                if k != (no_of_dip[i]-1):
-                    Zinp[step, no_of_dip[i]-1, k] = - (IFedDip[step, no_of_dip[i]-1, k] * loads_values[i] /
-                                                    IFedDip[step, no_of_dip[i]-1, no_of_dip[i]-1])  # !!!-!!!
+    # # Version with wrong loads array
+    # for i in range(nec_file_num):           # Loop by files
+    #     for k in range(array_input_num):    # Loop by dipoles
+    #         if k != (no_of_dip[i]-1):
+    #             Zinp[step, no_of_dip[i]-1, k] = - (IFedDip[step, no_of_dip[i]-1, k] * loads_values[i] /
+    #                                             IFedDip[step, no_of_dip[i]-1, no_of_dip[i]-1])  # !!!-!!!
+
+    # New version with correct loads array hopefully
+    for i in range(nec_file_num):           # Loop by files
+        for k in range(array_input_num):    # Loop by dipoles
+            if k != (no_of_dip[i]-1):
+                Zinp[step, no_of_dip[i]-1, k] = - (IFedDip[step, no_of_dip[i]-1, k] * Rload[i, k] /
+                                                IFedDip[step, no_of_dip[i]-1, no_of_dip[i]-1])  # !!!-!!!
+
+
+    if MIRRORING:
 
         # Mirroring the Impedances for dipoles that were not excited
 
