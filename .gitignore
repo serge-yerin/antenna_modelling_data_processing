@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+DATA/
+Results/
+
+# Data files
+*.dat
+*.csv
+*.png
+
+# Environment
+.env
+.vscode
+.venv
+env/
+venv/
+ENV/ß
