@@ -25,23 +25,33 @@ extended for other possibilities, but still you need to analyze carefully the re
 # *************************************************************
 # General parameters
 path_to_data = 'DATA/'
-MIRRORING = False                 # Mirroring of currents and impedances for non-excited dipoles (if True, the program will mirror the currents and impedances for non-excited dipoles, if False, the program will not mirror the currents and impedances for non-excited dipoles)
-LEADING_ZEROS_FILENAME = True     # Leading zeros in the NEC output file names (if True, the program will add leading zeros to the NEC output file names, if False, the program will not add leading zeros to the NEC output file names)
+MIRRORING = False                  # Mirroring of currents and impedances for non-excited dipoles (if True, the program will mirror the currents and impedances for non-excited dipoles, if False, the program will not mirror the currents and impedances for non-excited dipoles)
+LEADING_ZEROS_FILENAME = False     # Leading zeros in the NEC output file names (if True, the program will add leading zeros to the NEC output file names, if False, the program will not add leading zeros to the NEC output file names)
 print_or_not = 1
 
 # *************************************************************
 #               ARRAY CONFIGURATION PARAMETERS                *
 # *************************************************************
 
-
-# T-shaped GURT antenna subarray of 5 + 5 =  dipoles (inputs) each dipole of 45 wires
+# X-shaped GURT antenna subarray of 5 + 4 = 9 dipoles (inputs) each dipole of 45 wires
 no_of_wires_per_dipole = 45       # Number of wires per dipole (not segments!) needed to find loads  
-array_input_num = 10              # Array inputs number (total number of dipoles in array or inputs of dipoles)
+array_input_num = 9               # Array inputs number (total number of dipoles in array or inputs of dipoles)
 num_of_freq = 80                  # Maximal possible number of frequencies analyzed
 
-no_of_dip = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # dipoles being excited
+no_of_dip = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # dipoles being excited
 mirror_from = []	      
 mirror_into = []         
+
+
+
+# # T-shaped GURT antenna subarray of 5 + 5 = 10 dipoles (inputs) each dipole of 45 wires
+# no_of_wires_per_dipole = 45       # Number of wires per dipole (not segments!) needed to find loads  
+# array_input_num = 10              # Array inputs number (total number of dipoles in array or inputs of dipoles)
+# num_of_freq = 80                  # Maximal possible number of frequencies analyzed
+
+# no_of_dip = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # dipoles being excited
+# mirror_from = []	      
+# mirror_into = []         
 
 # # Rectangular UTR-2 antenna array of 6 * 5 = 30 dipoles
 # no_of_wires_per_dipole = 182      # Number of wires per dipole (not segments!) needed to find loads  # 434
@@ -146,7 +156,8 @@ for file_num in range(len(no_of_dip)):  # Main loop by NEC output files
     else:
         no = str(no_of_dip[file_num])
 
-    file_name = path_to_data + 'GURT_T_N=10_E=' + no + '.out'  # GURT GURT_T_N=10_E=01.out
+    file_name = path_to_data + 'GURT-X_N=9_Nex=' + no + '.out'   # GURT GURT-X_N=9_Nex=1.out
+    # file_name = path_to_data + 'GURT_T_N=10_E=' + no + '.out'  # GURT GURT_T_N=10_E=01.out
     # file_name = path_to_data + 'UTR2_6x5-' + no + '.out'
     # file_name = path_to_data + 'UTR2_SEG=1018_6x5_Ex' + no + '.out'  # UTR2_SEG=1018_6x5_Ex1
     # file_name = path_to_data + 'UTR2_6x5-' + str(file_num + 1) + '.out'
